@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Activity, Bot, CreditCard, Database, HardDrive, Image as ImageIcon, Layers, Mail, MessageSquare, Server } from "lucide-react";
 
 import { DateRangePicker, type DateRangeSelection } from "@/components/dashboard/date-range-picker";
-import { ResourceState, SectionEyebrow, StatusBadge } from "@/components/ui/primitives";
+import { ResourceState, StatusBadge } from "@/components/ui/primitives";
+import { PageHeader } from "@/components/intelligence/visuals";
 import { useAdminResource, AdminRequestError, isEndpointMissing } from "@/hooks/use-admin-resource";
 import { useCreateProductionCostEntry } from "@/hooks/use-production-costs";
 import type { ProductionCostService } from "@/lib/api/schemas";
@@ -119,6 +120,20 @@ function CostEntryForm({ services, selection, onClose }: { services: ProductionC
   );
 }
 
+function CostsHeader({ actions, meta }: { actions?: ReactNode; meta?: ReactNode }) {
+  return (
+    <PageHeader
+      accent="amber"
+      eyebrow="Money / cost control"
+      title="Production costs"
+      icon={<CreditCard size={14} />}
+      description="Provider usage, effective-dated pricing, invoices and manual adjustments across BROKA services."
+      actions={actions}
+      meta={meta}
+    />
+  );
+}
+
 export default function ProductionCostsPage() {
   const [selection, setSelection] = useState<DateRangeSelection>(defaultSelection);
   const [entryOpen, setEntryOpen] = useState(false);
@@ -131,10 +146,10 @@ export default function ProductionCostsPage() {
   const pricingQuery = useMemo(() => new URLSearchParams("limit=500"), []);
   const pricing = useAdminResource("productionCostPricing", pricingQuery, Boolean(costs.data));
 
-  if (costs.isLoading) return <div className="space-y-6"><div><SectionEyebrow>Money / Cost control</SectionEyebrow><h1 className="font-display text-3xl font-bold text-white">Production costs</h1></div><DateRangePicker {...selection} onChange={setSelection} showBucket={false} /><ResourceState state="loading" message="Loading provider usage and production costs." /></div>;
+  if (costs.isLoading) return <div className="space-y-6"><CostsHeader /><DateRangePicker {...selection} onChange={setSelection} showBucket={false} /><ResourceState state="loading" message="Loading provider usage and production costs." /></div>;
   if (costs.isError) {
-    if (unavailable(costs.error)) return <div className="space-y-6"><div><SectionEyebrow>Money / Cost control</SectionEyebrow><h1 className="font-display text-3xl font-bold text-white">Production costs</h1></div><DateRangePicker {...selection} onChange={setSelection} showBucket={false} /><ResourceState state="error" message="The verified backend route /admin/revenue/costs/services is not available on the connected API deployment yet." /></div>;
-    return <div className="space-y-6"><div><SectionEyebrow>Money / Cost control</SectionEyebrow><h1 className="font-display text-3xl font-bold text-white">Production costs</h1></div><DateRangePicker {...selection} onChange={setSelection} showBucket={false} /><ResourceState state="error" message={costs.error.message} action={<button onClick={() => costs.refetch()} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white">Retry</button>} /></div>;
+    if (unavailable(costs.error)) return <div className="space-y-6"><CostsHeader /><DateRangePicker {...selection} onChange={setSelection} showBucket={false} /><ResourceState state="error" message="The verified backend route /admin/revenue/costs/services is not available on the connected API deployment yet." /></div>;
+    return <div className="space-y-6"><CostsHeader /><DateRangePicker {...selection} onChange={setSelection} showBucket={false} /><ResourceState state="error" message={costs.error.message} action={<button onClick={() => costs.refetch()} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white">Retry</button>} /></div>;
   }
   if (!costs.data) return <ResourceState state="empty" message="No production-cost response was returned." />;
 
@@ -150,10 +165,10 @@ export default function ProductionCostsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div><SectionEyebrow>Money / Cost control</SectionEyebrow><h1 className="font-display text-3xl font-bold tracking-[-0.05em] text-white">Production costs</h1><p className="mt-1 max-w-3xl text-sm leading-6 text-slate-400">Provider usage, effective-dated pricing, invoices and manual adjustments across BROKA services.</p><p className="mt-2 text-[11px] text-slate-500">Generated {new Date(data.generated_at).toLocaleString("en-KE")} · {data.reporting_period.start.slice(0,10)} to {data.reporting_period.end.slice(0,10)} (end exclusive)</p></div>
-        <button type="button" onClick={() => setEntryOpen((v) => !v)} className="rounded-lg border border-[#8b75ff]/45 bg-[#8b75ff]/15 px-3 py-2.5 text-xs font-semibold text-white">{entryOpen ? "Close entry" : "＋ Add invoice / manual cost"}</button>
-      </div>
+      <CostsHeader
+        meta={<p className="text-[11px] text-slate-500">Generated {new Date(data.generated_at).toLocaleString("en-KE")} · {data.reporting_period.start.slice(0,10)} to {data.reporting_period.end.slice(0,10)} (end exclusive)</p>}
+        actions={<button type="button" onClick={() => setEntryOpen((v) => !v)} className="rounded-lg border border-[#8b75ff]/45 bg-[#8b75ff]/15 px-3 py-2.5 text-xs font-semibold text-white">{entryOpen ? "Close entry" : "＋ Add invoice / manual cost"}</button>}
+      />
       <DateRangePicker {...selection} onChange={setSelection} showBucket={false} />
       {entryOpen ? <CostEntryForm services={data.services} selection={selection} onClose={() => setEntryOpen(false)} /> : null}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

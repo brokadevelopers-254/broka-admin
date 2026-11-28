@@ -11,19 +11,21 @@ import { MarketplaceActivity } from "@/components/dashboard/analytics/marketplac
 import { MarketplaceMovement } from "@/components/dashboard/marketplace-movement";
 import { OperationsAndRisk } from "@/components/dashboard/operations-risk";
 import { PriorityQueue } from "@/components/dashboard/priority-queue";
-import { EngagementTrends, trendRange } from "@/components/dashboard/command-center/engagement-trends";
+import { EngagementTrends } from "@/components/dashboard/command-center/engagement-trends";
 import { ExecutiveOverview } from "@/components/dashboard/command-center/executive-overview";
 import { LiveActivityStrip } from "@/components/dashboard/user-intelligence/user-intelligence-view";
 import { PulseHero, PulseTiles, TargetsPanel, TrustStrip, type PulseWindow } from "@/components/intelligence/founder-pulse";
 import { Panel, SectionHeading } from "@/components/intelligence/visuals";
 import { StatusBadge, UnavailablePanel } from "@/components/ui/primitives";
 import { JarvisContextPanel } from "@/components/nexus/jarvis-context";
+import { NexusLenses } from "@/components/nexus/lenses";
 import { NexusMetricStrip } from "@/components/nexus/metric-strip";
 import { NexusPlatformOverview } from "@/components/nexus/platform-overview";
 import { NexusQuickActions } from "@/components/nexus/quick-actions";
 import { isEndpointMissing, useAdminResource } from "@/hooks/use-admin-resource";
 import { useAlertsStream } from "@/hooks/use-alerts-stream";
 import { useTimeseries } from "@/hooks/use-timeseries";
+import { trendRange } from "@/components/dashboard/command-center/engagement-trends";
 import type { AdminIdentity } from "@/types/broka";
 
 function rangeFromSearch(value: string | null): PulseWindow {
@@ -85,8 +87,110 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
   }[apiState];
   const liveBadge = stream.status === "connected" ? { tone: "success" as const, label: "Alert stream live" } : stream.status === "connecting" ? { tone: "warning" as const, label: "Stream connecting" } : { tone: "neutral" as const, label: "Stream offline" };
 
+  // Marketplace lens: supply, demand and the deals they become.
+  const marketplaceLens = (
+    <>
+      <section aria-labelledby="marketplace-title" className="space-y-4">
+        <SectionHeading
+          id="marketplace-title"
+          eyebrow="Marketplace intelligence"
+          title="Supply, demand and activity"
+          description="Counts the pulse measured in this window; a missing figure stays missing."
+          actions={<Link href="/market" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">Marketplace <ArrowRight size={12} aria-hidden="true" /></Link>}
+        />
+        {pulseLoading ? <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5" aria-busy="true">{Array.from({ length: 10 }, (_, index) => <div key={index} className="skeleton h-[148px]" />)}</div> : null}
+        {!pulseLoading && !pulseData && pulseError ? (intelligenceMissing
+          ? <UnavailablePanel title="Founder intelligence needs the upgraded BROKA API" detail="GET /admin/intelligence/pulse is not served by the connected backend yet. The verified platform totals still work; the pulse, North Star indicators and targets appear after the backend deploy." />
+          : <UnavailablePanel title="The marketplace pulse could not be loaded" detail={pulseError instanceof Error ? pulseError.message : "The marketplace pulse could not be loaded."} action={<button type="button" onClick={retryPulse} className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-200"><RefreshCw size={12} aria-hidden="true" />Retry</button>} />) : null}
+        {pulseData ? <PulseTiles pulse={pulseData} /> : null}
+        <MarketplaceMovement snapshot={snapshot.data} state={snapshotState} />
+        <MarketplaceActivity windowDays={windowDays} />
+      </section>
+
+      <section aria-labelledby="engagement-title" className="space-y-3">
+        <SectionHeading id="engagement-title" eyebrow="Growth and engagement" title="How use and sign-ups are moving" />
+        <EngagementTrends windowDays={windowDays} />
+      </section>
+    </>
+  );
+
+  // Money lens: earned, spent, and progress against the founder's targets.
+  const moneyLens = (
+    <>
+      <section aria-labelledby="money-title" className="space-y-3">
+        <SectionHeading
+          id="money-title"
+          eyebrow="Revenue and financial performance"
+          title="What BROKA earned and spent"
+          description="Commission is recognised from released deals; it is not reconciled bank cash."
+        />
+        {pulseData ? <FinancialIntelligence pulse={pulseData} /> : (
+          <Panel eyebrow="Financial intelligence" title="Platform economics">
+            <div className="space-y-2" aria-busy="true"><div className="skeleton h-20" /><div className="skeleton h-20" /></div>
+          </Panel>
+        )}
+      </section>
+      {pulseData ? <TargetsPanel pulse={pulseData} /> : null}
+    </>
+  );
+
+  // Trust and operations lens: complaints deadlines, dependency probes and queues.
+  const trustLens = (
+    <>
+      <section aria-labelledby="trust-title" className="space-y-3">
+        <SectionHeading id="trust-title" eyebrow="Trust and safety" title="Complaints and their deadlines" description="Flagged, suspended and restricted accounts, disputes and fraud are in the verified totals lens." />
+        {pulseData ? (
+          <Panel
+            eyebrow="Trust"
+            title="Complaints desk"
+            description="First-reply deadlines: urgent 4h, high 24h, normal 72h, low 5 days. Age and deadline, not colour alone."
+            actions={<Link href="/complaints" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">Open desk <ArrowRight size={12} aria-hidden="true" /></Link>}
+          >
+            <TrustStrip pulse={pulseData} />
+          </Panel>
+        ) : (
+          <Panel eyebrow="Trust" title="Complaints desk">
+            <p className="text-xs text-slate-500">The complaints summary arrives with the intelligence pulse. <Link href="/complaints" className="text-slate-300 underline decoration-white/20 underline-offset-2">Open the complaints desk</Link> for the live queue.</p>
+          </Panel>
+        )}
+      </section>
+      <section aria-labelledby="health-title" className="space-y-3">
+        <SectionHeading id="health-title" eyebrow="System health" title="Services, queues and risk" />
+        <OperationsAndRisk snapshot={snapshot.data} health={serviceHealth.data} pulse={pulseData} snapshotState={snapshotState} healthState={healthState} />
+      </section>
+    </>
+  );
+
+  // Verified totals lens: the former always-on sections, one click away.
+  const totalsLens = (
+    <>
+      {commandMissing ? (
+        <UnavailablePanel
+          compact
+          title="The grouped Command Center figures need the upgraded BROKA API"
+          detail="GET /admin/command-center is not served by the connected backend yet. The sections below read their own endpoints until it is."
+        />
+      ) : (
+        <ExecutiveOverview data={command.data} isLoading={command.isLoading} error={command.error} onRetry={() => void command.refetch()} />
+      )}
+
+      <section aria-labelledby="live-activity-title" className="space-y-3">
+        <SectionHeading
+          id="live-activity-title"
+          eyebrow="Real-time activity"
+          title="Who is in the app now"
+          description="Foreground heartbeats only. The full picture, with DAU, WAU, MAU and retention, is on User intelligence."
+          actions={<Link href="/analytics/users" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">User intelligence <ArrowRight size={12} aria-hidden="true" /></Link>}
+        />
+        <LiveActivityStrip />
+      </section>
+
+      <KpiGrid state={summaryState} summary={summary.data} />
+    </>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_344px]">
         <div className="min-w-0 space-y-4">
           <PulseHero
@@ -129,73 +233,13 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
         generatedAt={trendSeries.data?.to ?? command.data?.generated_at}
       />
 
-      {commandMissing ? (
-        <UnavailablePanel
-          compact
-          title="The grouped Command Center figures need the upgraded BROKA API"
-          detail="GET /admin/command-center is not served by the connected backend yet. The sections below read their own endpoints until it is."
-        />
-      ) : (
-        <ExecutiveOverview data={command.data} isLoading={command.isLoading} error={command.error} onRetry={() => void command.refetch()} />
-      )}
-
-      <section aria-labelledby="live-activity-title" className="space-y-3">
-        <SectionHeading
-          id="live-activity-title"
-          eyebrow="Real-time activity"
-          title="Who is in the app now"
-          description="Foreground heartbeats only. The full picture, with DAU, WAU, MAU and retention, is on User intelligence."
-          actions={<Link href="/analytics/users" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">User intelligence <ArrowRight size={12} aria-hidden="true" /></Link>}
-        />
-        <LiveActivityStrip />
-      </section>
-
-      <section aria-labelledby="engagement-title" className="space-y-3">
-        <SectionHeading id="engagement-title" eyebrow="Growth and engagement" title="How use and sign-ups are moving" />
-        <EngagementTrends windowDays={windowDays} />
-      </section>
-
-      <section aria-labelledby="marketplace-title" className="space-y-4">
-        <SectionHeading id="marketplace-title" eyebrow="Marketplace intelligence" title="Supply, demand and activity" />
-        {pulseLoading ? <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5" aria-busy="true">{Array.from({ length: 10 }, (_, index) => <div key={index} className="skeleton h-[148px]" />)}</div> : null}
-        {!pulseLoading && !pulseData && pulseError ? (intelligenceMissing
-          ? <UnavailablePanel title="Founder intelligence needs the upgraded BROKA API" detail="GET /admin/intelligence/pulse is not served by the connected backend yet. The verified platform totals below still work; the pulse, North Star indicators and targets appear after the backend deploy." />
-          : <UnavailablePanel title="The marketplace pulse could not be loaded" detail={pulseError instanceof Error ? pulseError.message : "The marketplace pulse could not be loaded."} action={<button type="button" onClick={retryPulse} className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-200"><RefreshCw size={12} aria-hidden="true" />Retry</button>} />) : null}
-        {pulseData ? <PulseTiles pulse={pulseData} /> : null}
-        <MarketplaceMovement snapshot={snapshot.data} state={snapshotState} />
-        <MarketplaceActivity windowDays={windowDays} />
-      </section>
-
-      <section aria-labelledby="money-title" className="space-y-3">
-        <SectionHeading id="money-title" eyebrow="Revenue and financial performance" title="What BROKA earned and spent" />
-        {pulseData ? <FinancialIntelligence pulse={pulseData} /> : (
-          <Panel eyebrow="Financial intelligence" title="Platform economics">
-            <div className="space-y-2" aria-busy="true"><div className="skeleton h-20" /><div className="skeleton h-20" /></div>
-          </Panel>
-        )}
-      </section>
-
-      <section aria-labelledby="trust-title" className="space-y-3">
-        <SectionHeading id="trust-title" eyebrow="Trust and safety" title="Complaints and their deadlines" description="Flagged, suspended and restricted accounts, disputes and fraud are in the executive overview above." />
-        {pulseData ? (
-          <Panel
-            eyebrow="Trust"
-            title="Complaints desk"
-            description="First-reply deadlines: urgent 4h, high 24h, normal 72h, low 5 days. Age and deadline, not colour alone."
-            actions={<Link href="/complaints" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">Open desk <ArrowRight size={12} aria-hidden="true" /></Link>}
-          >
-            <TrustStrip pulse={pulseData} />
-          </Panel>
-        ) : null}
-      </section>
-
-      <section aria-labelledby="health-title" className="space-y-3">
-        <SectionHeading id="health-title" eyebrow="System health" title="Services, queues and risk" />
-        <OperationsAndRisk snapshot={snapshot.data} health={serviceHealth.data} pulse={pulseData} snapshotState={snapshotState} healthState={healthState} />
-      </section>
-
       <section id="decisions" aria-labelledby="decisions-title" className="scroll-mt-24 space-y-3">
-        <SectionHeading id="decisions-title" eyebrow="Decisions" title="What needs a decision" description="Ranked by severity from backend signals and live queues. Each item names its evidence; none acts on an account by itself." />
+        <SectionHeading
+          id="decisions-title"
+          eyebrow="Priority decisions"
+          title="What needs a decision"
+          description="Ranked by severity from backend signals and live queues. Each item names its evidence; none acts on an account by itself."
+        />
         <PriorityQueue
           insights={insightsData}
           insightsLoading={insightsLoading}
@@ -208,9 +252,15 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
         />
       </section>
 
-      {pulseData ? <TargetsPanel pulse={pulseData} /> : null}
-
-      <KpiGrid state={summaryState} summary={summary.data} />
+      <NexusLenses
+        label="Command Center detail"
+        lenses={[
+          { id: "marketplace", label: "Marketplace & growth", hint: "Supply, demand, deals and engagement", render: () => marketplaceLens },
+          { id: "money", label: "Money", hint: "Revenue, costs and founder targets", render: () => moneyLens },
+          { id: "trust", label: "Trust & operations", hint: "Complaints, dependency probes and queues", render: () => trustLens },
+          { id: "totals", label: "Verified totals", hint: "Executive overview, live presence and summary counts", render: () => totalsLens },
+        ]}
+      />
     </div>
   );
 }
