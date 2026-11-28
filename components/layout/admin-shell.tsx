@@ -3,7 +3,8 @@
 import {
   Activity, BadgeDollarSign, BarChart3, Bell, Bot, Briefcase, ChevronDown, ChevronLeft, ChevronRight, ClipboardList,
   Cpu, CornerDownLeft, FileSearch, FileText, Gauge, Landmark, LayoutDashboard, LogOut, Mail, Megaphone, Menu,
-  Microscope, MessageSquareWarning, Network, Orbit, Radar, Radio, Receipt, Search, ShieldAlert, Store, TrendingUp, Users, X,
+  Microscope, MessageSquareWarning, Network, Orbit, PanelRight, Radar, Radio, Receipt, Search, ShieldAlert, Sparkles, Store,
+  TrendingUp, Users, X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -15,8 +16,8 @@ import { useUnreadAlerts } from "@/hooks/use-alerts";
 import { useAlertsStream } from "@/hooks/use-alerts-stream";
 import { useAdminResource } from "@/hooks/use-admin-resource";
 import type { AdminIdentity } from "@/types/broka";
-import { StatusBadge } from "@/components/ui/primitives";
 import { InfoTip } from "@/components/ui/tooltip";
+import { JarvisContextPanel } from "@/components/nexus/jarvis-context";
 
 type NavEntry = { label: string; href: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; badge?: "complaints" };
 type NavGroup = { label: string; entries: NavEntry[] };
@@ -58,14 +59,14 @@ function useComplaintBadge(enabled: boolean): ComplaintBadge {
 
 function BrandLockup({ compact = false }: { compact?: boolean }) {
   return (
-    <Link href="/" aria-label="BROKA Admin command center" className={cn("focus-ring flex items-center rounded-xl px-2 py-2", compact ? "justify-center" : "gap-3")}>
-      <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl border border-[#8b75ff]/35 bg-[#8b75ff]/10 shadow-[0_0_24px_rgba(139,117,255,0.25)]">
-        <img src="/brand/broka-mark.png" alt="" className="h-full w-full object-cover" />
-      </div>
+    <Link href="/" aria-label="BROKA Admin Nexus command center" className={cn("focus-ring flex items-center rounded-xl px-1.5 py-2", compact ? "justify-center" : "gap-3")}>
+      <span className="nx-brand-mark">
+        <img src="/brand/broka-mark.png" alt="" className="h-7 w-7 object-contain p-0.5" />
+      </span>
       {compact ? null : (
-        <div>
-          <p className="font-display text-base font-black leading-none tracking-[-0.05em] text-white">BROKA</p>
-          <p className="mt-1 border-t border-[#8b75ff]/35 pt-1 text-[9px] font-bold tracking-[0.3em] text-[#a895ff]">ADMIN</p>
+        <div className="min-w-0">
+          <p className="font-display text-[17px] font-black leading-none tracking-[-0.045em] text-white">BROKA</p>
+          <p className="mt-1 text-[8.5px] font-bold uppercase tracking-[0.32em] text-[#a895ff]">Admin Nexus</p>
         </div>
       )}
     </Link>
@@ -87,13 +88,13 @@ function RailContent({ onNavigate, complaints, collapsed = false }: { onNavigate
   const pathname = usePathname();
   const searchParams = useSearchParams();
   return (
-    <nav className={cn("scroll-thin mt-4 flex-1 overflow-y-auto pb-6", collapsed ? "px-2" : "px-3")} aria-label="Admin navigation">
+    <nav className={cn("scroll-thin flex-1 overflow-y-auto pb-4 pt-2", collapsed ? "px-2" : "px-3")} aria-label="Admin navigation">
       {navGroups.map((group) => (
-        <section key={group.label} className="mb-5">
+        <section key={group.label} className="nx-nav-group">
           {collapsed ? (
-            <div className="mx-auto mb-2 h-px w-6 bg-white/[0.08]" aria-hidden="true" />
+            <div className="mx-auto my-2 h-px w-6 bg-white/[0.08]" aria-hidden="true" />
           ) : (
-            <p className="nav-group-label px-3 pb-2 text-[9px] font-bold uppercase tracking-[0.22em] text-slate-500">{group.label}</p>
+            <p className="nx-nav-label">{group.label}</p>
           )}
           <div className="space-y-0.5">
             {group.entries.map((entry) => {
@@ -108,16 +109,25 @@ function RailContent({ onNavigate, complaints, collapsed = false }: { onNavigate
                   aria-current={isActive ? "page" : undefined}
                   aria-label={collapsed ? entry.label : undefined}
                   title={collapsed ? `${entry.label} · ${group.label}` : undefined}
-                  className={cn(
-                    "focus-ring group relative flex items-center rounded-lg text-[13px] font-medium transition-colors",
-                    collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2",
-                    isActive ? "bg-[#8b75ff]/[0.14] text-[#ded8ff]" : "text-slate-400 hover:bg-white/[0.045] hover:text-slate-100",
-                  )}
+                  className={cn("nx-nav-item", collapsed && "justify-center !px-1")}
                 >
-                  {isActive ? <span className="absolute inset-y-1.5 left-0 w-[2px] rounded-full bg-gradient-to-b from-[#8b75ff] to-[#54d7e9] shadow-[0_0_10px_rgba(139,117,255,0.7)]" aria-hidden="true" /> : null}
-                  <Icon size={collapsed ? 18 : 16} strokeWidth={isActive ? 2.2 : 1.7} aria-hidden="true" />
+                  <span className="nx-nav-icon" aria-hidden="true">
+                    <Icon size={15} strokeWidth={isActive ? 2.2 : 1.7} />
+                  </span>
                   {collapsed ? null : <span className="truncate">{entry.label}</span>}
-                  {badge ? <span className={cn("rounded-full text-[10px] font-black tabular-nums", collapsed ? "absolute right-1 top-1 h-2 w-2 p-0 text-transparent" : "ml-auto px-1.5 py-0.5", badge.urgent ? "bg-rose-400/90 text-white shadow-[0_0_12px_rgba(251,113,133,0.55)]" : "bg-white/[0.08] text-slate-200")} aria-label={`${badge.count} awaiting a reply${badge.urgent ? ", some past deadline" : ""}`} title={collapsed ? `${badge.count} awaiting a reply` : undefined}>{badge.count > 99 ? "99+" : badge.count}</span> : null}
+                  {badge ? (
+                    <span
+                      className={cn(
+                        "rounded-full text-[9.5px] font-black tabular-nums",
+                        collapsed ? "absolute right-0.5 top-0.5 h-2 w-2 p-0 text-transparent" : "ml-auto px-1.5 py-0.5",
+                        badge.urgent ? "bg-rose-500 text-white shadow-[0_0_12px_rgba(251,113,133,0.6)]" : "bg-[#947bff]/30 text-[#efeaff]",
+                      )}
+                      aria-label={`${badge.count} awaiting a reply${badge.urgent ? ", some past deadline" : ""}`}
+                      title={collapsed ? `${badge.count} awaiting a reply` : undefined}
+                    >
+                      {badge.count > 99 ? "99+" : badge.count}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
@@ -125,6 +135,32 @@ function RailContent({ onNavigate, complaints, collapsed = false }: { onNavigate
         </section>
       ))}
     </nav>
+  );
+}
+
+function SystemStatus({ apiLabel, apiTone, streamLabel, streamRef }: {
+  apiLabel: string;
+  apiTone: "success" | "warning" | "danger" | "neutral";
+  streamLabel: string;
+  streamRef: React.RefObject<HTMLSpanElement | null>;
+}) {
+  return (
+    <div className="nx-status-card" aria-label="System status">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">System status</p>
+        <span ref={streamRef} className="nx-pulse-dot" data-tone={apiTone === "success" ? "warning" : apiTone === "danger" ? "danger" : "muted"} data-live="false" aria-hidden="true" />
+      </div>
+      <div className="mt-1.5 space-y-1">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-200">
+          <span className="nx-pulse-dot" data-tone={apiTone === "success" ? "warning" : apiTone === "danger" ? "danger" : "muted"} aria-hidden="true" />
+          <span className="truncate">{apiLabel}</span>
+        </p>
+        <p className="flex items-center gap-1.5 text-[10px] text-slate-500">
+          <span className="nx-pulse-dot" data-tone={streamLabel === "Live" ? "success" : "muted"} data-live={streamLabel === "Live" ? "true" : "false"} aria-hidden="true" />
+          <span className="truncate">Alert stream · {streamLabel}</span>
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -139,16 +175,19 @@ function UserFooter({ admin, collapsed = false }: { admin: AdminIdentity; collap
   }
   return (
     <div className={cn("border-t border-white/[0.07] p-3", collapsed && "px-2")}>
-      <div className={cn("flex items-center rounded-xl bg-white/[0.035] p-2.5", collapsed ? "flex-col gap-2 px-1" : "gap-3")}>
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#ded8ff] to-[#8b75ff] text-xs font-black text-slate-950" aria-hidden="true">{admin.displayName.slice(0, 1).toUpperCase()}</div>
+      <div className={cn("flex items-center rounded-xl border border-white/[0.07] bg-white/[0.03] p-2", collapsed ? "flex-col gap-2 px-1" : "gap-2.5")}>
+        <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#cfc6ff] to-[#7c63ff] text-[11px] font-black text-slate-950" aria-hidden="true">
+          {admin.displayName.slice(0, 1).toUpperCase()}
+          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#090c18] bg-emerald-400" />
+        </span>
         {collapsed ? null : (
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-slate-100">{admin.displayName}</p>
-            <p className="truncate text-[10px] text-slate-500">{admin.roleLabel}</p>
+            <p className="truncate text-[11.5px] font-semibold text-slate-100">{admin.displayName}</p>
+            <p className="truncate text-[9.5px] text-slate-500">{admin.roleLabel}</p>
           </div>
         )}
-        <button onClick={logout} disabled={busy} className="focus-ring rounded-md p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-rose-300" aria-label="Log out" title={collapsed ? "Log out" : undefined}>
-          <LogOut size={15} aria-hidden="true" />
+        <button onClick={logout} disabled={busy} className="focus-ring rounded-md p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-rose-300 disabled:opacity-50" aria-label="Log out" title={collapsed ? "Log out" : undefined}>
+          <LogOut size={14} aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -195,6 +234,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
         { key: "quick-overdue", label: "Complaints past their deadline", hint: "Trust desk", href: "/complaints?queue=overdue", icon: MessageSquareWarning, group: "Quick actions" },
         { key: "quick-fraud", label: "Open fraud queue", hint: "Trust & Safety", href: "/fraud?state=open", icon: ShieldAlert, group: "Quick actions" },
         { key: "quick-integrity", label: "Finance integrity controls", hint: "Money", href: "/finance-integrity", icon: BadgeDollarSign, group: "Quick actions" },
+        { key: "quick-jarvis", label: "Ask Jarvis", hint: "Jarvis Mode", href: "/assistant", icon: Bot, group: "Quick actions" },
       ];
       return [...recents, ...quick, ...pages];
     }
@@ -232,12 +272,12 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/70 px-4 pt-[10vh] backdrop-blur-sm" onKeyDown={onKeyDown}>
+    <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/75 px-4 pt-[10vh] backdrop-blur-sm" onKeyDown={onKeyDown}>
       <button type="button" className="absolute inset-0 cursor-default" aria-label="Close command palette" tabIndex={-1} onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-label="Command palette" className="palette-panel relative w-full max-w-xl overflow-hidden rounded-2xl border border-[#8b75ff]/30 bg-[#0a0d18]/95 shadow-[0_30px_120px_rgba(0,0,0,0.6),0_0_60px_rgba(139,117,255,0.18)]">
+      <div role="dialog" aria-modal="true" aria-label="Command palette" className="palette-panel nx-panel relative w-full max-w-xl overflow-hidden !rounded-2xl">
         <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-3">
-          <Search size={16} className="text-[#a895ff]" aria-hidden="true" />
-          <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Jump to a page, or search users and complaints…" aria-label="Command" aria-controls="palette-results" aria-activedescendant={items[index] ? `palette-${items[index].key}` : undefined} role="combobox" aria-expanded="true" className="h-9 flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-600" />
+          <Search size={16} className="text-[#c9beff]" aria-hidden="true" />
+          <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search across BROKA… (pages, users, complaints)" aria-label="Command" aria-controls="palette-results" aria-activedescendant={items[index] ? `palette-${items[index].key}` : undefined} role="combobox" aria-expanded="true" className="h-9 flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-600" />
           <kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-500">Esc</kbd>
         </div>
         <ul id="palette-results" role="listbox" aria-label="Results" className="scroll-thin max-h-[54vh] overflow-y-auto p-2">
@@ -251,8 +291,8 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
                   const active = position === index;
                   return (
                     <li key={item.key} id={`palette-${item.key}`} role="option" aria-selected={active}>
-                      <button type="button" tabIndex={-1} onMouseEnter={() => setIndex(position)} onClick={() => go(item)} className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition", active ? "bg-[#8b75ff]/15 text-white" : "text-slate-300")}>
-                        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg border", active ? "border-[#8b75ff]/40 bg-[#8b75ff]/15 text-[#ded8ff]" : "border-white/[0.07] bg-white/[0.03] text-slate-400")} aria-hidden="true"><Icon size={15} /></span>
+                      <button type="button" tabIndex={-1} onMouseEnter={() => setIndex(position)} onClick={() => go(item)} className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition", active ? "bg-[#947bff]/15 text-white" : "text-slate-300")}>
+                        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg border", active ? "border-[#947bff]/45 bg-[#947bff]/15 text-[#ded8ff]" : "border-white/[0.07] bg-white/[0.03] text-slate-400")} aria-hidden="true"><Icon size={15} /></span>
                         <span className="min-w-0 flex-1"><span className="block truncate font-medium">{item.label}</span><span className="block truncate text-[11px] text-slate-500">{item.hint}</span></span>
                         {active ? <CornerDownLeft size={14} className="text-slate-500" aria-hidden="true" /> : null}
                       </button>
@@ -283,12 +323,12 @@ function Breadcrumbs({ pathname, group, title }: { pathname: string; group?: str
   // Every Jarvis section lives under /assistant. Its crumbs name the workspace, then the section.
   const jarvis = root === "assistant";
   return (
-    <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-500 lg:flex">
-      {pathname === "/" ? <><span className="text-slate-400">Founder</span><ChevronRight size={11} aria-hidden="true" /><span className="truncate text-slate-300">Overview</span></> : <>
+    <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center gap-1.5 whitespace-nowrap text-[10.5px] text-slate-500 xl:flex">
+      {pathname === "/" ? <><span className="text-slate-400">Founder</span><ChevronRight size={10} aria-hidden="true" /><span className="truncate text-slate-300">Command Center</span></> : <>
         <Link href="/" className="focus-ring whitespace-nowrap rounded hover:text-slate-200">Command Center</Link>
-        {root ? <><ChevronRight size={11} aria-hidden="true" /><Link href={`/${root}`} className="focus-ring rounded hover:text-slate-200">{jarvis ? "Jarvis Mode" : (rootEntry?.label ?? formatRouteLabel(root))}</Link></> : null}
-        {isDetail ? <><ChevronRight size={11} aria-hidden="true" /><span className="truncate text-slate-300">{jarvis ? sectionForPath(pathname).label : formatRouteLabel(segments[1])}</span></> : null}
-        {group && !root ? <><ChevronRight size={11} aria-hidden="true" /><span className="truncate text-slate-300">{title}</span></> : null}
+        {root ? <><ChevronRight size={10} aria-hidden="true" /><Link href={`/${root}`} className="focus-ring rounded hover:text-slate-200">{jarvis ? "Jarvis Mode" : (rootEntry?.label ?? formatRouteLabel(root))}</Link></> : null}
+        {isDetail ? <><ChevronRight size={10} aria-hidden="true" /><span className="truncate text-slate-300">{jarvis ? sectionForPath(pathname).label : formatRouteLabel(segments[1])}</span></> : null}
+        {group && !root ? <><ChevronRight size={10} aria-hidden="true" /><span className="truncate text-slate-300">{title}</span></> : null}
       </>}
     </nav>
   );
@@ -297,6 +337,7 @@ function Breadcrumbs({ pathname, group, title }: { pathname: string; group?: str
 export function AdminShell({ children, admin, apiConfigured }: { children: React.ReactNode; admin: AdminIdentity; apiConfigured: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [jarvisOpen, setJarvisOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -338,6 +379,7 @@ export function AdminShell({ children, admin, apiConfigured }: { children: React
         setPaletteOpen((open) => !open);
       } else if (event.key === "Escape") {
         setMobileOpen(false);
+        setJarvisOpen(false);
       }
     }
     document.addEventListener("keydown", onKeydown);
@@ -352,14 +394,23 @@ export function AdminShell({ children, admin, apiConfigured }: { children: React
     rememberRoute({ href: query ? `${pathname}?${query}` : pathname, label: pageTitle });
   }, [pathname, searchParams, pageTitle]);
 
+  const streamRef = useRef<HTMLSpanElement | null>(null);
+  const windowDays = searchParams.get("pulse") === "30" ? 30 : 7;
+  const contextLabel = pathname === "/" ? "the Command Center" : pageTitle;
+
   return (
-    <div className="min-h-screen bg-[#05060d] text-slate-100">
+    <div className="nx-app text-slate-100">
       <a className="skip-link print-hidden" href="#admin-main">Skip to main content</a>
+      <div className="nx-canvas print-hidden" aria-hidden="true">
+        <div className="nx-stars" />
+      </div>
+
       <aside
-        className={cn("print-hidden fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-white/[0.07] bg-[#080a14]/95 transition-[width] duration-200 lg:flex", collapsed ? "w-[76px]" : "w-[268px]")}
+        className={cn("nx-rail print-hidden fixed inset-y-0 left-0 z-30 hidden flex-col transition-[width] duration-200 lg:flex", collapsed ? "w-[84px]" : "w-[268px]")}
         aria-label="Primary navigation"
       >
-        <div className={cn("flex items-center pt-4", collapsed ? "justify-center px-2" : "justify-between px-4")}>
+        <span className="nx-rail-edge" aria-hidden="true" />
+        <div className={cn("flex items-center pt-4", collapsed ? "justify-center px-3" : "justify-between px-4")}>
           <BrandLockup compact={collapsed} />
           {collapsed ? null : (
             <button type="button" onClick={toggleCollapsed} className="focus-ring rounded-md p-1.5 text-slate-500 hover:bg-white/5 hover:text-slate-200" aria-label="Collapse navigation">
@@ -373,55 +424,102 @@ export function AdminShell({ children, admin, apiConfigured }: { children: React
           </button>
         ) : null}
         <RailContent complaints={complaints} collapsed={collapsed} />
-        {!collapsed ? <UserFooter admin={admin} /> : <UserFooter admin={admin} collapsed />}
+        <div className={cn("space-y-2 px-3 pb-3", collapsed && "px-2")}>
+          {collapsed ? null : <SystemStatus apiLabel={apiBadge.label} apiTone={apiBadge.tone} streamLabel={streamBadge.label} streamRef={streamRef} />}
+          <InfoTip label="System status">{`${apiBadge.detail} ${streamBadge.detail}`}</InfoTip>
+        </div>
+        <UserFooter admin={admin} collapsed={collapsed} />
       </aside>
 
-      {mobileOpen ? <button className="fixed inset-0 z-40 bg-black/70 backdrop-blur-[2px] lg:hidden" aria-label="Close navigation" onClick={() => setMobileOpen(false)} /> : null}
+      {mobileOpen ? <button className="fixed inset-0 z-40 bg-black/75 backdrop-blur-[2px] lg:hidden" aria-label="Close navigation" onClick={() => setMobileOpen(false)} /> : null}
       {/* Off-screen while closed: inert keeps its links out of the tab order and the accessibility tree. */}
-      <aside inert={!mobileOpen} aria-hidden={!mobileOpen} className={cn("print-hidden fixed inset-y-0 left-0 z-50 flex w-[288px] flex-col border-r border-white/[0.08] bg-[#080a14] shadow-2xl transition-transform lg:hidden", mobileOpen ? "translate-x-0" : "-translate-x-full")} aria-label="Mobile navigation">
+      <aside inert={!mobileOpen} aria-hidden={!mobileOpen} className={cn("nx-rail print-hidden fixed inset-y-0 left-0 z-50 flex w-[300px] flex-col shadow-2xl transition-transform lg:hidden", mobileOpen ? "translate-x-0" : "-translate-x-full")} aria-label="Mobile navigation">
         <div className="flex items-center justify-between px-4 pt-4">
           <BrandLockup />
-          <button className="focus-ring rounded-md p-2 text-slate-400 hover:bg-white/5 hover:text-white" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={18} /></button>
+          <button className="nx-icon-btn" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={17} /></button>
         </div>
         <RailContent complaints={complaints} onNavigate={() => setMobileOpen(false)} />
+        <div className="px-3 pb-3"><SystemStatus apiLabel={apiBadge.label} apiTone={apiBadge.tone} streamLabel={streamBadge.label} streamRef={streamRef} /></div>
         <UserFooter admin={admin} />
       </aside>
 
-      <div className={cn("min-h-screen transition-[padding] duration-200", collapsed ? "lg:pl-[76px]" : "lg:pl-[268px]")}>
-        <header className="print-hidden sticky top-0 z-20 flex h-[68px] items-center gap-3 border-b border-white/[0.07] bg-[#05060d]/88 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
-          <button className="focus-ring shrink-0 rounded-lg border border-white/[0.08] p-2.5 text-slate-300 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation" aria-expanded={mobileOpen}><Menu size={18} /></button>
-          <div className="min-w-0 flex-1">
+      <div className={cn("relative z-10 min-h-screen transition-[padding] duration-200", collapsed ? "lg:pl-[84px]" : "lg:pl-[268px]")}>
+        <header className="nx-header print-hidden">
+          <button className="nx-icon-btn lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open navigation" aria-expanded={mobileOpen}><Menu size={18} /></button>
+
+          <div className="hidden min-w-0 shrink-0 lg:block">
             <Breadcrumbs pathname={pathname} group={groupLabel} title={pageTitle} />
-            <div className="mt-0.5 flex min-w-0 items-center gap-2">
-              <p className="truncate font-display text-[13px] font-semibold tracking-[-0.01em] text-slate-200">{pageTitle}</p>
-              <span className="hidden shrink-0 items-center gap-1 rounded-full border border-[#8b75ff]/20 bg-[#8b75ff]/[0.07] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#b7a9ff] sm:inline-flex">
-                <span className="h-1 w-1 rounded-full bg-[#54d7e9]" aria-hidden="true" />
+            <div className="mt-1 flex min-w-0 items-center gap-2">
+              <p className="truncate font-display text-[15px] font-bold tracking-[-0.02em] text-white">{pageTitle}</p>
+              <span className="hidden shrink-0 items-center gap-1 rounded-full border border-[#947bff]/22 bg-[#947bff]/[0.08] px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-[0.16em] text-[#c9beff] xl:inline-flex">
+                <Sparkles size={9} aria-hidden="true" />
                 {groupLabel ?? "BROKA operations"}
               </span>
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-            <button type="button" onClick={() => setPaletteOpen(true)} className="focus-ring hidden min-w-[230px] items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 py-2 text-left text-xs text-slate-500 transition hover:border-[#8b75ff]/35 hover:text-slate-300 xl:flex" aria-label="Open command palette"><Search size={15} aria-hidden="true" /><span className="flex-1">Search or jump to…</span><kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-500">Ctrl K</kbd></button>
-            <button type="button" onClick={() => setPaletteOpen(true)} className="focus-ring rounded-lg border border-white/[0.07] p-2.5 text-slate-400 xl:hidden" aria-label="Search or jump"><Search size={17} aria-hidden="true" /></button>
-            <span className="hidden items-center gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-1.5 py-0.5 sm:inline-flex">
-              <span className="pl-0.5 pr-1 text-[8px] font-bold uppercase tracking-[0.16em] text-slate-600">System</span>
-              <StatusBadge tone={apiBadge.tone}>{apiBadge.label}</StatusBadge>
+
+          <div className="flex min-w-0 flex-1 items-center justify-center px-1 lg:px-4">
+            <button type="button" onClick={() => setPaletteOpen(true)} className="nx-search focus-ring w-full max-w-xl max-sm:w-10 max-sm:justify-center max-sm:px-0" aria-label="Open command palette to search or jump to a page">
+              <Search size={16} aria-hidden="true" />
+              <span className="hidden min-w-0 flex-1 truncate text-left text-xs sm:block">Search across BROKA…</span>
+              <kbd className="hidden rounded border border-white/10 bg-black/30 px-1.5 py-0.5 text-[10px] text-slate-500 sm:inline">⌘ K</kbd>
+            </button>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <span className="hidden items-center gap-1.5 rounded-full border border-emerald-400/22 bg-emerald-400/[0.07] px-2.5 py-1.5 text-[9.5px] font-bold uppercase tracking-[0.14em] text-emerald-200 xl:inline-flex">
+              <span className="nx-pulse-dot" data-tone={apiBadge.tone === "success" ? "success" : apiBadge.tone === "danger" ? "danger" : "muted"} data-live={apiBadge.tone === "success" ? "true" : "false"} aria-hidden="true" />
+              {apiBadge.label}
               <InfoTip label="Backend connectivity">{apiBadge.detail}</InfoTip>
-              <span className="mx-0.5 h-3 w-px bg-white/10" aria-hidden="true" />
-              <StatusBadge tone={streamBadge.tone}>{streamBadge.label}</StatusBadge>
-              <InfoTip label="Live alert stream">{streamBadge.detail}</InfoTip>
             </span>
-            {complaints && complaints.count > 0 ? <Link href="/complaints" className={cn("focus-ring relative rounded-lg border p-2.5 transition", complaints.urgent ? "border-rose-400/35 text-rose-200 hover:bg-rose-400/10" : "border-white/[0.07] text-slate-400 hover:bg-white/[0.05] hover:text-slate-100")} aria-label={`Open complaints, ${complaints.count} awaiting a reply`}><MessageSquareWarning size={17} aria-hidden="true" /><span className={cn("absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full px-1 text-[10px] font-black text-white", complaints.urgent ? "bg-rose-500" : "bg-slate-600")} aria-hidden="true">{complaints.count > 99 ? "99+" : complaints.count}</span></Link> : null}
-            <Link href="/alerts" className="focus-ring relative rounded-lg border border-white/[0.07] p-2.5 text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-100" aria-label={unreadCount > 0 ? `Open alert centre, ${unreadCount} unread alerts` : "Open alert centre, no unread alerts"}><Bell size={17} aria-hidden="true" />{unreadCount > 0 ? <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-[#8b75ff] px-1 text-[10px] font-black text-white" aria-hidden="true">{unreadCount > 99 ? "99+" : unreadCount}</span> : null}</Link>
-            <div className="ml-0.5 hidden items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.025] px-2 py-1.5 sm:flex" aria-label={`Signed in as ${admin.displayName}, ${admin.roleLabel}`}>
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-[#ded8ff] to-[#8b75ff] text-[10px] font-black text-slate-950" aria-hidden="true">{admin.displayName.slice(0, 1).toUpperCase()}</span>
-              <span className="hidden max-w-24 truncate text-xs font-semibold text-slate-200 md:inline">{admin.displayName}</span>
-              <ChevronDown size={13} className="hidden text-slate-600 md:inline" aria-hidden="true" />
+            <button type="button" onClick={() => setJarvisOpen(true)} className="nx-jarvis-btn focus-ring" aria-label="Open Jarvis context panel" aria-expanded={jarvisOpen}>
+              <Bot size={16} aria-hidden="true" />
+              <span className="hidden sm:inline">Jarvis</span>
+              <span className="nx-pulse-dot" data-tone={streamBadge.label === "Live" ? "success" : "muted"} data-live={streamBadge.label === "Live" ? "true" : "false"} aria-hidden="true" />
+            </button>
+            {complaints && complaints.count > 0 ? (
+              <Link href="/complaints" className={cn("nx-icon-btn focus-ring relative", complaints.urgent && "!border-rose-400/40 !text-rose-200")} aria-label={`Open complaints, ${complaints.count} awaiting a reply`}>
+                <MessageSquareWarning size={17} aria-hidden="true" />
+                <span className={cn("absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full px-1 text-[9.5px] font-black text-white", complaints.urgent ? "bg-rose-500" : "bg-[#7c63ff]")} aria-hidden="true">{complaints.count > 99 ? "99+" : complaints.count}</span>
+              </Link>
+            ) : null}
+            <Link href="/alerts" className="nx-icon-btn focus-ring relative" aria-label={unreadCount > 0 ? `Open alert centre, ${unreadCount} unread alerts` : "Open alert centre, no unread alerts"}>
+              <Bell size={17} aria-hidden="true" />
+              {unreadCount > 0 ? <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[9.5px] font-black text-white" aria-hidden="true">{unreadCount > 99 ? "99+" : unreadCount}</span> : null}
+            </Link>
+            <button type="button" onClick={() => setJarvisOpen((open) => !open)} className="nx-icon-btn focus-ring hidden xl:grid" aria-label="Open Jarvis context panel" aria-expanded={jarvisOpen}>
+              <PanelRight size={17} aria-hidden="true" />
+            </button>
+            <div className="ml-0.5 flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] py-1 pl-1 pr-2" aria-label={`Signed in as ${admin.displayName}, ${admin.roleLabel}`}>
+              <span className="grid h-7 w-7 place-items-center rounded-full bg-gradient-to-br from-[#cfc6ff] to-[#7c63ff] text-[10px] font-black text-slate-950" aria-hidden="true">{admin.displayName.slice(0, 1).toUpperCase()}</span>
+              <span className="hidden max-w-24 truncate text-[11px] font-semibold text-slate-200 md:inline">{admin.displayName}</span>
+              <ChevronDown size={12} className="hidden text-slate-500 md:inline" aria-hidden="true" />
             </div>
           </div>
         </header>
-        <main id="admin-main" className="mx-auto w-full max-w-[1800px] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">{children}</main>
+
+        <div className="px-4 pb-2 pt-3 lg:hidden">
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate font-display text-[15px] font-bold text-white">{pageTitle}</p>
+            <span className="shrink-0 rounded-full border border-[#947bff]/22 bg-[#947bff]/[0.08] px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-[0.14em] text-[#c9beff]">{groupLabel ?? "BROKA"}</span>
+          </div>
+        </div>
+
+        <main id="admin-main" className="mx-auto w-full max-w-[1720px] px-3 py-4 sm:px-5 lg:px-7 lg:py-6">{children}</main>
       </div>
+
+      {jarvisOpen ? (
+        <>
+          <button type="button" className="fixed inset-0 z-[55] bg-black/45 backdrop-blur-[1px]" aria-label="Close Jarvis panel" onClick={() => setJarvisOpen(false)} />
+          <JarvisContextPanel
+            contextLabel={contextLabel}
+            windowDays={windowDays}
+            onClose={() => setJarvisOpen(false)}
+            className="nx-fade fixed inset-y-0 right-0 z-[56] w-full max-w-[380px] !rounded-none border-y-0 border-r-0 sm:inset-y-3 sm:right-3 sm:max-h-[calc(100vh-1.5rem)] sm:!rounded-[1.2rem] sm:border"
+          />
+        </>
+      ) : null}
+
       {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} /> : null}
     </div>
   );

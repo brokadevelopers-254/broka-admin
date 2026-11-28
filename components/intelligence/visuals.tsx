@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight, Minus, X } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Bot, Minus, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
@@ -253,9 +253,8 @@ export function Panel({ id, eyebrow, title, description, actions, children, clas
   id?: string; eyebrow?: string; title: string; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; tag?: string;
 }) {
   return (
-    <section id={id} className={cn("holo-panel hud-frame scroll-mt-24 p-5 sm:p-6", className)} aria-labelledby={id ? `${id}-title` : undefined}>
+    <section id={id} className={cn("nx-panel scroll-mt-24 p-5 sm:p-6", className)} aria-labelledby={id ? `${id}-title` : undefined}>
       {tag ? <span className="hud-tag hud-tag--right" aria-hidden="true">{tag}</span> : null}
-      <div className="spectrum-rule pointer-events-none absolute inset-x-14 top-0 opacity-70" aria-hidden="true" />
       <div className="relative mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {eyebrow ? <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#a895ff]">{eyebrow}</p> : null}
@@ -270,25 +269,32 @@ export function Panel({ id, eyebrow, title, description, actions, children, clas
 }
 
 /** The consistent page header used by every operational workspace. */
-export function PageHeader({ eyebrow, title, description, actions, icon, meta }: {
-  eyebrow: string; title: ReactNode; description?: ReactNode; actions?: ReactNode; icon?: ReactNode; meta?: ReactNode;
+export type PageAccent = "violet" | "cyan" | "emerald" | "amber" | "rose";
+
+/** The consistent NEXUS workspace banner used by every operational surface. */
+export function PageHeader({ eyebrow, title, description, actions, icon, meta, accent = "violet" }: {
+  eyebrow: string; title: ReactNode; description?: ReactNode; actions?: ReactNode; icon?: ReactNode; meta?: ReactNode; accent?: PageAccent;
 }) {
   return (
-    <header className="instrument-panel hud-frame px-5 py-5 sm:px-6">
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-50 constellation" aria-hidden="true" />
-      <div className="scanlines pointer-events-none absolute inset-0 opacity-50" aria-hidden="true" />
-      <div className="spectrum-rule pointer-events-none absolute inset-x-16 top-0 opacity-80" aria-hidden="true" />
+    <header className={`nx-page-header nx-accent-${accent} px-5 py-5 sm:px-6`}>
+      <div className="nx-hero-grid opacity-60" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/3 opacity-40 constellation sm:block" aria-hidden="true" />
       <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            {icon ? <span className="grid h-7 w-7 place-items-center rounded-lg border border-[#8b75ff]/30 bg-[#8b75ff]/10 text-[#c9beff]" aria-hidden="true">{icon}</span> : null}
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#a895ff]">{eyebrow}</p>
+            {icon ? <span className="nx-page-icon" aria-hidden="true">{icon}</span> : null}
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#c9beff]">{eyebrow}</p>
           </div>
-          <h1 className="mt-2 font-display text-2xl font-bold tracking-[-0.04em] text-white sm:text-[1.9rem]">{title}</h1>
+          <h1 className="mt-2 font-display text-2xl font-bold tracking-[-0.045em] text-white sm:text-[1.95rem]">{title}</h1>
           {description ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">{description}</p> : null}
           {meta ? <div className="mt-3 flex flex-wrap items-center gap-2">{meta}</div> : null}
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {actions}
+          <Link href="/assistant" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-[#947bff]/35 bg-[#947bff]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#ded8ff] transition hover:bg-[#947bff]/18" title="Open Jarvis, which answers from verified figures and shows its method">
+            <Bot size={12} aria-hidden="true" /> Ask Jarvis
+          </Link>
+        </div>
       </div>
     </header>
   );

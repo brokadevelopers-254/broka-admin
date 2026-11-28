@@ -278,6 +278,7 @@ export function ReportBuilder() {
   return (
     <div className="space-y-6">
       <PageHeader
+        accent="violet"
         eyebrow="Reports"
         title="Report builder"
         description="Choose the figures, the dates and the comparison. Every figure is read from the same source as its dashboard page; one that cannot be measured for the period says why and is left out of the summary."

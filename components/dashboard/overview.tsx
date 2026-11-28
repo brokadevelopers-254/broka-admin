@@ -11,14 +11,19 @@ import { MarketplaceActivity } from "@/components/dashboard/analytics/marketplac
 import { MarketplaceMovement } from "@/components/dashboard/marketplace-movement";
 import { OperationsAndRisk } from "@/components/dashboard/operations-risk";
 import { PriorityQueue } from "@/components/dashboard/priority-queue";
-import { EngagementTrends } from "@/components/dashboard/command-center/engagement-trends";
+import { EngagementTrends, trendRange } from "@/components/dashboard/command-center/engagement-trends";
 import { ExecutiveOverview } from "@/components/dashboard/command-center/executive-overview";
 import { LiveActivityStrip } from "@/components/dashboard/user-intelligence/user-intelligence-view";
 import { PulseHero, PulseTiles, TargetsPanel, TrustStrip, type PulseWindow } from "@/components/intelligence/founder-pulse";
 import { Panel, SectionHeading } from "@/components/intelligence/visuals";
 import { StatusBadge, UnavailablePanel } from "@/components/ui/primitives";
+import { JarvisContextPanel } from "@/components/nexus/jarvis-context";
+import { NexusMetricStrip } from "@/components/nexus/metric-strip";
+import { NexusPlatformOverview } from "@/components/nexus/platform-overview";
+import { NexusQuickActions } from "@/components/nexus/quick-actions";
 import { isEndpointMissing, useAdminResource } from "@/hooks/use-admin-resource";
 import { useAlertsStream } from "@/hooks/use-alerts-stream";
+import { useTimeseries } from "@/hooks/use-timeseries";
 import type { AdminIdentity } from "@/types/broka";
 
 function rangeFromSearch(value: string | null): PulseWindow {
@@ -30,6 +35,7 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const range = rangeFromSearch(searchParams.get("pulse"));
+  const windowDays = Number(range);
   const windowQuery = useMemo(() => new URLSearchParams({ window_days: range }), [range]);
   // One read gives the grouped figures, the decision feed and the pulse the
   // other sections render, so the pulse is computed once per refresh.
@@ -46,6 +52,10 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
   const snapshot = useAdminResource("opsSnapshot");
   const serviceHealth = useAdminResource("serviceHealth");
   const stream = useAlertsStream();
+
+  // The same range EngagementTrends and MarketplaceActivity request, so React
+  // Query serves one response to all three panels.
+  const trendSeries = useTimeseries(useMemo(() => trendRange(windowDays), [windowDays]));
 
   const pulseData = command.data?.pulse ?? legacyPulse.data;
   const pulseLoading = command.isLoading || (legacy && legacyPulse.isLoading);
@@ -74,19 +84,49 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
     failed: { tone: "danger" as const, label: "Backend health failed" },
   }[apiState];
   const liveBadge = stream.status === "connected" ? { tone: "success" as const, label: "Alert stream live" } : stream.status === "connecting" ? { tone: "warning" as const, label: "Stream connecting" } : { tone: "neutral" as const, label: "Stream offline" };
-  const windowDays = Number(range);
 
   return (
-    <div className="space-y-8">
-      <PulseHero
-        pulse={pulseData}
-        adminName={admin.displayName}
-        range={range}
-        onRangeChange={changeRange}
-        status={<>
-          <StatusBadge tone={connectionBadge.tone}>{connectionBadge.label}</StatusBadge>
-          <StatusBadge tone={liveBadge.tone}>{liveBadge.label}</StatusBadge>
-        </>}
+    <div className="space-y-6">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_344px]">
+        <div className="min-w-0 space-y-4">
+          <PulseHero
+            pulse={pulseData}
+            adminName={admin.displayName}
+            range={range}
+            onRangeChange={changeRange}
+            status={<>
+              <StatusBadge tone={connectionBadge.tone}>{connectionBadge.label}</StatusBadge>
+              <StatusBadge tone={liveBadge.tone}>{liveBadge.label}</StatusBadge>
+            </>}
+          />
+          <NexusMetricStrip
+            command={command.data}
+            summary={summary.data}
+            series={trendSeries.data?.series}
+            windowDays={windowDays}
+          />
+        </div>
+
+        <div className="min-w-0 xl:self-start">
+          <JarvisContextPanel
+            contextLabel="the Command Center"
+            windowDays={windowDays}
+            className="min-h-[420px] xl:max-h-[560px]"
+          />
+          <NexusQuickActions className="mt-4" />
+        </div>
+      </div>
+
+      <NexusPlatformOverview
+        series={trendSeries.data?.series}
+        windowDays={windowDays}
+        onWindowChange={(days) => changeRange(days === 30 ? "30" : "7")}
+        isLoading={trendSeries.isLoading}
+        isError={trendSeries.isError}
+        error={trendSeries.error}
+        onRetry={() => void trendSeries.refetch()}
+        health={serviceHealth.data}
+        generatedAt={trendSeries.data?.to ?? command.data?.generated_at}
       />
 
       {commandMissing ? (
@@ -102,7 +142,7 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
       <section aria-labelledby="live-activity-title" className="space-y-3">
         <SectionHeading
           id="live-activity-title"
-          eyebrow="02 · Real-time activity"
+          eyebrow="Real-time activity"
           title="Who is in the app now"
           description="Foreground heartbeats only. The full picture, with DAU, WAU, MAU and retention, is on User intelligence."
           actions={<Link href="/analytics/users" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/[0.09] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white">User intelligence <ArrowRight size={12} aria-hidden="true" /></Link>}
@@ -111,12 +151,12 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
       </section>
 
       <section aria-labelledby="engagement-title" className="space-y-3">
-        <SectionHeading id="engagement-title" eyebrow="03 · Growth and engagement" title="How use and sign-ups are moving" />
+        <SectionHeading id="engagement-title" eyebrow="Growth and engagement" title="How use and sign-ups are moving" />
         <EngagementTrends windowDays={windowDays} />
       </section>
 
       <section aria-labelledby="marketplace-title" className="space-y-4">
-        <SectionHeading id="marketplace-title" eyebrow="04 · Marketplace intelligence" title="Supply, demand and activity" />
+        <SectionHeading id="marketplace-title" eyebrow="Marketplace intelligence" title="Supply, demand and activity" />
         {pulseLoading ? <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5" aria-busy="true">{Array.from({ length: 10 }, (_, index) => <div key={index} className="skeleton h-[148px]" />)}</div> : null}
         {!pulseLoading && !pulseData && pulseError ? (intelligenceMissing
           ? <UnavailablePanel title="Founder intelligence needs the upgraded BROKA API" detail="GET /admin/intelligence/pulse is not served by the connected backend yet. The verified platform totals below still work; the pulse, North Star indicators and targets appear after the backend deploy." />
@@ -127,7 +167,7 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
       </section>
 
       <section aria-labelledby="money-title" className="space-y-3">
-        <SectionHeading id="money-title" eyebrow="05 · Revenue and financial performance" title="What BROKA earned and spent" />
+        <SectionHeading id="money-title" eyebrow="Revenue and financial performance" title="What BROKA earned and spent" />
         {pulseData ? <FinancialIntelligence pulse={pulseData} /> : (
           <Panel eyebrow="Financial intelligence" title="Platform economics">
             <div className="space-y-2" aria-busy="true"><div className="skeleton h-20" /><div className="skeleton h-20" /></div>
@@ -136,7 +176,7 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
       </section>
 
       <section aria-labelledby="trust-title" className="space-y-3">
-        <SectionHeading id="trust-title" eyebrow="06 · Trust and safety" title="Complaints and their deadlines" description="Flagged, suspended and restricted accounts, disputes and fraud are in the executive overview above." />
+        <SectionHeading id="trust-title" eyebrow="Trust and safety" title="Complaints and their deadlines" description="Flagged, suspended and restricted accounts, disputes and fraud are in the executive overview above." />
         {pulseData ? (
           <Panel
             eyebrow="Trust"
@@ -150,12 +190,12 @@ function OverviewBody({ admin }: { admin: AdminIdentity }) {
       </section>
 
       <section aria-labelledby="health-title" className="space-y-3">
-        <SectionHeading id="health-title" eyebrow="07 · System health" title="Services, queues and risk" />
+        <SectionHeading id="health-title" eyebrow="System health" title="Services, queues and risk" />
         <OperationsAndRisk snapshot={snapshot.data} health={serviceHealth.data} pulse={pulseData} snapshotState={snapshotState} healthState={healthState} />
       </section>
 
       <section id="decisions" aria-labelledby="decisions-title" className="scroll-mt-24 space-y-3">
-        <SectionHeading id="decisions-title" eyebrow="08 · Decisions" title="What needs a decision" description="Ranked by severity from backend signals and live queues. Each item names its evidence; none acts on an account by itself." />
+        <SectionHeading id="decisions-title" eyebrow="Decisions" title="What needs a decision" description="Ranked by severity from backend signals and live queues. Each item names its evidence; none acts on an account by itself." />
         <PriorityQueue
           insights={insightsData}
           insightsLoading={insightsLoading}

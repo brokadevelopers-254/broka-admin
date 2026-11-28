@@ -81,21 +81,21 @@ function NorthStarPercent({ label, href, rate, target, numerator, denominator, p
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{label}</p>
           {definition ? <span className="pointer-events-auto"><InfoTip label={`How ${label} is calculated`}>{definition}</InfoTip></span> : null}
         </div>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-3 flex flex-col items-center gap-2 xl:flex-row xl:items-center xl:gap-3">
           <Ring
             value={rate}
             target={target}
-            size={92}
-            stroke={8}
+            size={84}
+            stroke={7}
             label={label}
             from={accent === "violet" ? "#8b75ff" : "#54d7e9"}
             to={accent === "violet" ? "#54d7e9" : "#34d399"}
           />
-          <div className="min-w-0">
+          <div className="min-w-0 text-center xl:text-left">
             <p className="text-[11px] font-semibold text-slate-200">Target {formatPctValue(target, 0)}</p>
-            <p className="mt-1 text-[11px] tabular-nums text-slate-400">{formatCount(numerator)} / {formatCount(denominator)}</p>
-            <p className="mt-1 text-[10px] text-slate-600">previous {formatPctValue(previous)}</p>
-            {median !== undefined ? <p className="mt-1 text-[10px] text-slate-600">median {formatMinutes(median)}</p> : null}
+            <p className="mt-0.5 text-[10.5px] tabular-nums text-slate-400">{formatCount(numerator)} / {formatCount(denominator)}</p>
+            <p className="mt-0.5 text-[10px] text-slate-600">previous {formatPctValue(previous)}</p>
+            {median !== undefined ? <p className="text-[10px] text-slate-600">median {formatMinutes(median)}</p> : null}
           </div>
         </div>
         <div className="mt-3">
@@ -124,17 +124,19 @@ export function PulseHero({ pulse, adminName, range, onRangeChange, status }: {
   const replyRate = reply?.current.rate_pct ?? null;
   const replyTarget = reply?.target_pct ?? 50;
   return (
-    <section className="hero-cockpit relative overflow-hidden rounded-[1.4rem] border border-[#8b75ff]/25 px-5 py-6 sm:px-7 sm:py-7" aria-labelledby="pulse-hero-title">
-      <div className="cockpit-grid pointer-events-none absolute inset-0" aria-hidden="true" />
-      <div className="constellation pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" />
-      <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#8b75ff]/15 blur-3xl" aria-hidden="true" />
-      <div className="pointer-events-none absolute -bottom-36 left-[30%] h-72 w-72 rounded-full bg-[#54d7e9]/10 blur-3xl" aria-hidden="true" />
+    <section className="nx-hero px-5 py-6 sm:px-7 sm:py-7" aria-labelledby="pulse-hero-title">
+      <div className="nx-hero-grid" aria-hidden="true" />
+      <div className="nx-planet" aria-hidden="true" />
+      <div className="nx-planet-ring hidden sm:block" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(6,8,18,0.92)_0%,rgba(6,8,18,0.6)_48%,transparent_78%)]" aria-hidden="true" />
       <div className="relative grid gap-7 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,1.18fr)] xl:items-center">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="live-dot" aria-hidden="true" />
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#a895ff]">Founder cockpit · Kenya</p>
-            {pulse ? <span className="text-[10px] text-slate-500">last data update {relativeTime(pulse.generated_at)}</span> : null}
+            <span className="nx-hero-badge">
+              <Sparkles size={10} aria-hidden="true" />
+              BROKA NEXUS · Founder command center
+            </span>
+            {pulse ? <span className="text-[10px] text-slate-500">figures generated {relativeTime(pulse.generated_at)}</span> : null}
           </div>
           <h1 id="pulse-hero-title" className="mt-3 font-display text-3xl font-bold tracking-[-0.055em] text-white sm:text-[2.35rem]">
             {now ? greetingFor(now) : "Welcome back"}, {adminName}
@@ -168,6 +170,14 @@ export function PulseHero({ pulse, adminName, range, onRangeChange, status }: {
             <Segmented label="Pulse window" value={range} options={PULSE_WINDOWS} onChange={onRangeChange} />
             {status}
           </div>
+          <div className="relative mt-4 flex flex-wrap items-center gap-2">
+            <Link href="/intelligence" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 py-1.5 text-[11.5px] font-semibold text-slate-200 transition hover:border-[#947bff]/45 hover:text-white">
+              Explore intelligence <ArrowUpRight size={12} aria-hidden="true" />
+            </Link>
+            <Link href="/assistant" className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-[#947bff]/35 bg-[#947bff]/12 px-3 py-1.5 text-[11.5px] font-semibold text-[#efeaff] transition hover:bg-[#947bff]/20">
+              <Sparkles size={12} aria-hidden="true" /> Ask Jarvis
+            </Link>
+          </div>
           <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500">
             <span>Every figure excludes administrator accounts.</span>
             <Link href="/service-health" className="focus-ring inline-flex items-center gap-1 font-semibold text-amber-200/80 hover:text-amber-100">Service health <ArrowUpRight size={10} aria-hidden="true" /></Link>
@@ -176,7 +186,7 @@ export function PulseHero({ pulse, adminName, range, onRangeChange, status }: {
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3" aria-label="Marketplace North Star indicators">
+        <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1" aria-label="Marketplace North Star indicators">
           <NorthStarPercent
             label="Marketplace liquidity"
             href="/intelligence#categories"

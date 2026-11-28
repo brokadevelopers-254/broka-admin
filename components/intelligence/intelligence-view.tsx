@@ -69,6 +69,7 @@ export function IntelligenceView() {
   return (
     <div className="space-y-6">
       <PageHeader
+        accent="cyan"
         eyebrow="Founder intelligence"
         title="Where demand meets supply"
         description="Which categories and counties need sellers, which sellers leave buyers waiting, and which listings no one wants. Staff accounts are excluded from every figure; rules are deterministic."

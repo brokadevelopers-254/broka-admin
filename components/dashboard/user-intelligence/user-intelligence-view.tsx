@@ -366,6 +366,7 @@ export function UserIntelligenceView() {
   return (
     <div className="space-y-6">
       <PageHeader
+        accent="cyan"
         eyebrow="Identity & activity"
         title="User intelligence"
         description="Who is using BROKA now, how often they come back, and which accounts need attention. Built from foreground heartbeats, not from logins alone."
