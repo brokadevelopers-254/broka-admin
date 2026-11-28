@@ -10,7 +10,7 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 import type { CommandCenter, CommandMetric } from "@/lib/api/schemas";
@@ -22,6 +22,8 @@ import { formatKesAmount } from "@/lib/format";
 type Summary = AdminResourcePayloads["summary"];
 
 type Accent = "violet" | "cyan" | "emerald" | "amber";
+
+type MetricKey = { group: string; key: string };
 
 const ACCENT_CLASS: Record<Accent, string> = {
   violet: "text-[#c9beff] [--nx-accent:var(--nexus-violet)] [--nx-accent-rgb:var(--nexus-violet-rgb)]",
@@ -37,80 +39,153 @@ const ACCENT_STROKE: Record<Accent, string> = {
   amber: "#e7bd68",
 };
 
-const TILE_SPECS: Array<{
+/**
+ * Each tile names one measure and only ever charts that same measure.
+ *
+ * `level` metrics (total users, live listings, platform revenue) are point-in-
+ * time balances. Their spark is a clearly-labelled *flow* series, never the
+ * balance drawn as if it were daily movement — and where the backend serves no
+ * matching flow series, the spark is an explicit "not served" slot instead of a
+ * plausible line. Commission is never charted from GMV.
+ */
+type TileSpec = {
   id: string;
   label: string;
-  keys: string[];
+  /** Ordered candidate metrics, matched by group AND key. */
+  metrics: MetricKey[];
+  fallback?: (summary: Summary) => string | undefined;
+  /** The flow shown under a level, e.g. "new registrations in this window". */
+  flow?: { metrics: MetricKey[]; suffix: string };
+  series?: { key: string; label: string };
+  seriesNote: string;
+  definition: string;
   href: string;
   icon: typeof Users;
   accent: Accent;
-  series?: string;
-  summaryValue?: (summary: Summary) => string | undefined;
-  summaryCaption: string;
-}> = [
+};
+
+const TILE_SPECS: TileSpec[] = [
   {
     id: "users",
     label: "Total users",
-    keys: ["registered_users", "total_users", "users"],
+    metrics: [
+      { group: "growth", key: "registered_users" },
+      { group: "growth", key: "total_users" },
+    ],
+    fallback: (summary) => summary.users.toLocaleString("en-KE"),
+    flow: {
+      metrics: [
+        { group: "growth", key: "new_registrations" },
+        { group: "users", key: "new_registrations" },
+      ],
+      suffix: "new in this window",
+    },
+    series: { key: "signups", label: "New registrations per day" },
+    seriesNote: "Spark: new registrations per day — not the running total",
+    definition: "Every registered account, including sellers and administrators. The second line is accounts created in the selected window, which is a different figure.",
     href: "/users",
     icon: Users,
     accent: "violet",
-    series: "signups",
-    summaryValue: (summary) => summary.users.toLocaleString("en-KE"),
-    summaryCaption: "Verified user rows",
   },
   {
     id: "listings",
-    label: "Listings",
-    keys: ["live_listings", "total_listings", "listings"],
-    href: "/listings",
+    label: "Live listings",
+    metrics: [
+      { group: "marketplace", key: "live_listings" },
+      { group: "marketplace", key: "total_listings" },
+    ],
+    fallback: (summary) => (summary.listings_active ?? summary.listings).toLocaleString("en-KE"),
+    flow: {
+      metrics: [
+        { group: "marketplace", key: "new_listings" },
+        { group: "marketplace", key: "listings_created" },
+      ],
+      suffix: "created in this window",
+    },
+    series: { key: "listings_created", label: "New listings per day" },
+    seriesNote: "Spark: new listings per day — not current live supply",
+    definition: "Listings currently live. The second line is listings created in the selected window, and the spark is that daily creation flow — neither is the same as live supply.",
+    href: "/listings?status=active",
     icon: PackageOpen,
     accent: "cyan",
-    series: "listings_created",
-    summaryValue: (summary) => (summary.listings_active ?? summary.listings).toLocaleString("en-KE"),
-    summaryCaption: "Verified listing rows",
   },
   {
     id: "deals",
     label: "Deals agreed",
-    keys: ["deals_agreed", "deals_released", "deals"],
+    metrics: [
+      { group: "marketplace", key: "deals_agreed" },
+      { group: "marketplace", key: "deals" },
+    ],
+    fallback: (summary) => summary.deals.toLocaleString("en-KE"),
+    series: { key: "deals_agreed", label: "Deals agreed per day" },
+    seriesNote: "Spark: deals agreed per day",
+    definition: "Deals with an agreed price in the selected window. Deals released or completed are counted separately.",
     href: "/deals",
     icon: Handshake,
     accent: "amber",
-    series: "deals_agreed",
-    summaryValue: (summary) => summary.deals.toLocaleString("en-KE"),
-    summaryCaption: "Verified deal rows",
   },
   {
     id: "revenue",
-    label: "Commission",
-    keys: ["revenue", "commission_recognised", "commission"],
+    label: "Platform revenue",
+    metrics: [
+      { group: "financial", key: "revenue" },
+      { group: "financial", key: "commission_recognised" },
+    ],
+    fallback: (summary) => formatKesAmount(summary.commission_earned_kes),
+    seriesNote: "No daily revenue series is served — the analytics chart below plots GMV, a separate measure",
+    definition: "Income recorded for BROKA in the window (listing fees and released commission). Not reconciled bank cash, and never derived from GMV.",
     href: "/revenue",
     icon: Wallet,
     accent: "emerald",
-    series: "gmv_minor",
-    summaryValue: (summary) => formatKesAmount(summary.commission_earned_kes),
-    summaryCaption: "Released deals · not bank cash",
   },
 ];
 
-function findMetric(command: CommandCenter | undefined, keys: string[]): CommandMetric | undefined {
+/** Exact group+key lookup: two groups may legitimately share a key name. */
+function findMetric(command: CommandCenter | undefined, keys: MetricKey[]): CommandMetric | undefined {
   if (!command) return undefined;
-  const metrics = command.groups.flatMap((group) => group.metrics);
-  for (const key of keys) {
-    const match = metrics.find((metric) => metric.key === key);
+  for (const { group, key } of keys) {
+    const match = command.groups.find((entry) => entry.key === group)?.metrics.find((metric) => metric.key === key);
     if (match) return match;
   }
   return undefined;
 }
 
+function availableValue(metric: CommandMetric | undefined): string | undefined {
+  if (!metric?.available) return undefined;
+  return formatMetricValue(metric.unit, metric.value);
+}
+
 /** Real series only: null buckets break the path, they are never drawn as zero. */
-function Spark({ points, tone, label }: { points?: TimeseriesPoint[]; tone: string; label: string }) {
-  const measured = useMemo(() => (points ?? []).filter((point): point is { t: string; v: number } => point.v !== null), [points]);
+function Spark({ points, tone, label, seriesKey, note }: {
+  points?: TimeseriesPoint[];
+  tone: string;
+  label: string;
+  seriesKey?: string;
+  note: string;
+}) {
+  const gradientId = useId();
+  const measured = useMemo(
+    () => (points ?? []).filter((point): point is { t: string; v: number } => point.v !== null),
+    [points],
+  );
+  if (!seriesKey) {
+    return (
+      <div
+        className="nx-metric__spark flex items-center rounded-md border border-dashed border-white/[0.08] px-2"
+        data-testid="nx-spark-unavailable"
+      >
+        <span className="text-[8.5px] uppercase leading-[1.35] tracking-[0.12em] text-slate-600">Not charted · see definition</span>
+      </div>
+    );
+  }
   if (measured.length < 2) {
     return (
-      <div className="mt-2 flex h-[34px] items-end rounded-md border border-dashed border-white/[0.07] px-2 pb-1" aria-hidden="true">
-        <span className="text-[8.5px] uppercase tracking-[0.14em] text-slate-600">No series for this window</span>
+      <div
+        className="nx-metric__spark flex items-center rounded-md border border-dashed border-white/[0.07] px-2"
+        data-testid="nx-spark-empty"
+        aria-label={`${label}: no measured buckets in this window`}
+      >
+        <span className="text-[8.5px] uppercase leading-[1.35] tracking-[0.12em] text-slate-600">No measured buckets</span>
       </div>
     );
   }
@@ -129,17 +204,40 @@ function Spark({ points, tone, label }: { points?: TimeseriesPoint[]; tone: stri
     .join(" ");
   const last = measured[measured.length - 1];
   const lastY = height - ((last.v - min) / span) * (height - 6) - 3;
+  // Keying the drawing on the measured values replays the draw animation when
+  // real data changes — never on a timer and never without new data.
+  const signature = `${seriesKey}:${measured.length}:${values.join(",")}`;
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="nx-metric__spark w-full" role="img" aria-label={label}>
+    <svg
+      key={signature}
+      viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
+      className="nx-metric__spark w-full"
+      role="img"
+      aria-label={`${label}. ${note}.`}
+      data-testid="nx-spark"
+      data-series-key={seriesKey}
+    >
       <defs>
-        <linearGradient id={`spark-${tone.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={tone} stopOpacity={0.38} />
           <stop offset="100%" stopColor={tone} stopOpacity={0.01} />
         </linearGradient>
       </defs>
-      <path d={`${path} L${width},${height} L0,${height} Z`} fill={`url(#spark-${tone.replace("#", "")})`} />
-      <path d={path} fill="none" stroke={tone} strokeWidth="1.6" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={width} cy={lastY} r="1.8" fill={tone} />
+      <path d={`${path} L${width},${height} L0,${height} Z`} fill={`url(#${gradientId})`} className="nx-spark-fill" />
+      <path
+        d={path}
+        fill="none"
+        stroke={tone}
+        strokeWidth="1.6"
+        vectorEffect="non-scaling-stroke"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        pathLength={1}
+        strokeDasharray={1}
+        className="nx-spark-line"
+      />
+      <circle cx={width} cy={lastY} r="1.8" fill={tone} className="nx-spark-dot" />
     </svg>
   );
 }
@@ -161,9 +259,9 @@ function Trend({ metric }: { metric?: CommandMetric }) {
 
 /**
  * The four headline figures. Every value comes from the command-center contract
- * or the verified admin summary; the sparkline is the measured series for the
- * same window. When a figure is not served, the card says so instead of
- * showing a plausible number.
+ * or the verified admin summary, and each sparkline is the measured series for
+ * the measure it is labelled with. A figure or series the backend does not
+ * serve is stated as such rather than replaced by a related metric.
  */
 export function NexusMetricStrip({
   command,
@@ -179,19 +277,29 @@ export function NexusMetricStrip({
   return (
     <section aria-label="Headline platform figures" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {TILE_SPECS.map((spec) => {
-        const metric = findMetric(command, spec.keys);
-        const fallback = summary ? spec.summaryValue?.(summary) : undefined;
-        const value = metric?.available ? formatMetricValue(metric.unit, metric.value) : fallback ?? "—";
+        const metric = findMetric(command, spec.metrics);
+        const fallback = summary ? spec.fallback?.(summary) : undefined;
+        const value = availableValue(metric) ?? fallback ?? "—";
+        const flowMetric = spec.flow ? findMetric(command, spec.flow.metrics) : undefined;
+        const flowValue = availableValue(flowMetric);
         const caption = metric
           ? metric.available
             ? metric.caption ?? `${windowDays}-day window`
             : metric.unavailable_reason ?? "Not measured by the backend"
           : fallback
-            ? `${spec.summaryCaption} · comparison unavailable`
+            ? `Verified summary · ${windowDays}-day comparison unavailable`
             : "Waiting for a verified response";
         const Icon = spec.icon;
-        const body = (
-          <>
+        return (
+          <Link
+            key={spec.id}
+            href={spec.href}
+            className={cn("nx-metric focus-ring min-h-[168px]", ACCENT_CLASS[spec.accent])}
+            aria-label={`${spec.label}: ${value}. Open the workspace.`}
+            title={spec.definition}
+            data-testid={`nx-metric-${spec.id}`}
+            data-series-key={spec.series?.key ?? "none"}
+          >
             <div className="relative flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{spec.label}</p>
@@ -201,19 +309,20 @@ export function NexusMetricStrip({
             </div>
             <div className="relative mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
               <Trend metric={metric} />
+              {spec.flow ? (
+                <span className="text-[10px] text-slate-500" data-testid={`nx-metric-${spec.id}-flow`}>
+                  {flowValue ?? "—"} {spec.flow.suffix}
+                </span>
+              ) : null}
             </div>
-            <Spark points={spec.series ? series?.[spec.series] : undefined} tone={ACCENT_STROKE[spec.accent]} label={`${spec.label} measured series for the last ${windowDays} days`} />
-            <p className="relative mt-1 truncate text-[9.5px] text-slate-600" title={caption}>{caption}</p>
-          </>
-        );
-        return (
-          <Link
-            key={spec.id}
-            href={spec.href}
-            className={cn("nx-metric focus-ring min-h-[148px]", ACCENT_CLASS[spec.accent])}
-            aria-label={`${spec.label}: ${value}. Open the workspace.`}
-          >
-            {body}
+            <Spark
+              points={spec.series ? series?.[spec.series.key] : undefined}
+              tone={ACCENT_STROKE[spec.accent]}
+              label={spec.series ? `${spec.series.label} for the last ${windowDays} days` : `${spec.label} trend`}
+              seriesKey={spec.series?.key}
+              note={spec.seriesNote}
+            />
+            <p className="relative mt-1 truncate text-[9.5px] text-slate-600" title={`${spec.seriesNote} · ${caption}`}>{spec.seriesNote}</p>
           </Link>
         );
       })}

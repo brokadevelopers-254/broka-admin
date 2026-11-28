@@ -6,8 +6,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 
 import { ReportViewer } from "@/components/reports/report-viewer";
-import { Chip, DataFreshness, Segmented } from "@/components/intelligence/visuals";
-import { ResourceState, SectionEyebrow, StatusBadge } from "@/components/ui/primitives";
+import { Chip, DataFreshness, PageHeader, Segmented } from "@/components/intelligence/visuals";
+import { ResourceState, StatusBadge } from "@/components/ui/primitives";
 import { isEndpointMissing, useAdminDetail, useAdminResource } from "@/hooks/use-admin-resource";
 import { useGenerateReport } from "@/hooks/use-intelligence";
 import type { ReportKind, ReportMeta } from "@/lib/api/intelligence-schemas";
@@ -102,26 +102,24 @@ export function ReportsCenter() {
 
   return (
     <div className="space-y-6">
-      <section className="instrument-panel flex flex-col gap-4 px-5 py-5 sm:px-6 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <SectionEyebrow>Founder reports</SectionEyebrow>
-          <h1 className="font-display text-3xl font-bold tracking-[-0.05em] text-white">The business, in writing</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">Daily, weekly and monthly reports written automatically when each period closes, with the figures frozen as they stood. Weekly and monthly reports are announced in the Alert Centre. Download, print or paste the digest into your team chat.</p>
-          <div className="mt-3">
-            <DataFreshness
-              label="Report archive"
-              state={archive.isLoading ? "loading" : missing ? "unavailable" : archive.isError ? "error" : "ready"}
-              windowLabel={`${kind} reports`}
-              source="GET /admin/reports for stored reports. A live preview is computed now and is never stored."
-            />
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        accent="violet"
+        eyebrow="Founder reports"
+        title="The business, in writing"
+        icon={<CalendarDays size={14} />}
+        description="Daily, weekly and monthly reports written automatically when each period closes, with the figures frozen as they stood. Weekly and monthly reports are announced in the Alert Centre. Download, print or paste the digest into your team chat."
+        meta={<DataFreshness
+          label="Report archive"
+          state={archive.isLoading ? "loading" : missing ? "unavailable" : archive.isError ? "error" : "ready"}
+          windowLabel={`${kind} reports`}
+          source="GET /admin/reports for stored reports. A live preview is computed now and is never stored."
+        />}
+        actions={<>
           <Segmented label="Report kind" value={kind} options={KINDS} onChange={(value) => update({ kind: value === "weekly" ? null : value, id: null })} />
           {schedule ? <StatusBadge tone={schedule.enabled ? "success" : "warning"}>{schedule.enabled ? `Automatic · ${schedule.timezone}` : "Automatic reports off"}</StatusBadge> : null}
           <Link href="/reports/builder" className="focus-ring rounded-lg border border-[#8b75ff]/35 bg-[#8b75ff]/10 px-3 py-1.5 text-xs font-semibold text-[#ded8ff]">Build a custom report</Link>
-        </div>
-      </section>
+        </>}
+      />
 
       {missing ? <ResourceState state="unavailable" message="Reports need the upgraded BROKA API (GET /admin/reports). They start appearing after the backend deploy and the first closed period." /> : null}
 

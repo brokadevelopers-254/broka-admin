@@ -18,7 +18,8 @@ import {
   X,
 } from "lucide-react";
 
-import { SectionEyebrow, StatusBadge, UnavailablePanel } from "@/components/ui/primitives";
+import { StatusBadge, UnavailablePanel } from "@/components/ui/primitives";
+import { PageHeader } from "@/components/intelligence/visuals";
 import { isEndpointMissing, useAdminCommunications } from "@/hooks/use-admin-resource";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import type {
@@ -121,18 +122,14 @@ export default function CommunicationsPage() {
   if (isEndpointMissing(error)) {
     return (
       <div className="space-y-6">
-        <header className="flex flex-col gap-4 border-b border-white/[0.07] pb-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <SectionEyebrow>Customer operations</SectionEyebrow>
-            <h1 className="font-display text-3xl font-semibold tracking-[-0.05em] text-white">
-              Service Communications
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Manage announcements, maintenance notices, incidents and product updates. View durable delivery ledgers, provider acceptance, in-app reads and worker diagnostics.
-            </p>
-          </div>
-          <StatusBadge tone="warning">Backend Upgrade Required</StatusBadge>
-        </header>
+        <PageHeader
+          accent="azure"
+          eyebrow="Live feed"
+          title="Service communications"
+          icon={<Megaphone size={14} />}
+          description="Manage announcements, maintenance notices, incidents and product updates. View durable delivery ledgers, provider acceptance, in-app reads and worker diagnostics."
+          actions={<StatusBadge tone="warning">Backend Upgrade Required</StatusBadge>}
+        />
 
         <UnavailablePanel
           title="Service Communications API not served by backend"
@@ -151,18 +148,13 @@ export default function CommunicationsPage() {
   return (
     <div className="space-y-6">
       {/* Workspace Header */}
-      <header className="flex flex-col gap-4 border-b border-white/[0.07] pb-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <SectionEyebrow>Customer operations</SectionEyebrow>
-          <h1 className="font-display text-3xl font-semibold tracking-[-0.05em] text-white">
-            Service Communications
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-            Manage announcements, maintenance notices, incidents and product updates. View durable delivery ledgers, provider acceptance, in-app reads and worker diagnostics.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
+      <PageHeader
+        accent="azure"
+        eyebrow="Live feed"
+        title="Service communications"
+        icon={<Megaphone size={14} />}
+        description="Manage announcements, maintenance notices, incidents and product updates. View durable delivery ledgers, provider acceptance, in-app reads and worker diagnostics."
+        actions={<>
           <button
             onClick={() => setIsDiagnosticsOpen(true)}
             className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-white/5 transition"
@@ -177,8 +169,8 @@ export default function CommunicationsPage() {
             <Plus size={15} />
             New Communication
           </button>
-        </div>
-      </header>
+        </>}
+      />
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.015] p-3 text-xs">

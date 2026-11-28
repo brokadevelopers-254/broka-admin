@@ -269,7 +269,7 @@ export function Panel({ id, eyebrow, title, description, actions, children, clas
 }
 
 /** The consistent page header used by every operational workspace. */
-export type PageAccent = "violet" | "cyan" | "emerald" | "amber" | "rose";
+export type PageAccent = "violet" | "cyan" | "emerald" | "amber" | "rose" | "azure";
 
 /** The consistent NEXUS workspace banner used by every operational surface. */
 export function PageHeader({ eyebrow, title, description, actions, icon, meta, accent = "violet" }: {

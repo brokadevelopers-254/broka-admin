@@ -3,7 +3,7 @@
 import { AlertCircle, CheckCircle2, CircleDashed, Lock, Mail, RotateCcw, Send } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 
-import { SectionEyebrow } from "@/components/ui/primitives";
+import { PageHeader } from "@/components/intelligence/visuals";
 import { useSendAdminEmail } from "@/hooks/use-send-admin-email";
 import {
   AdminEmailSendInSchema,
@@ -103,13 +103,13 @@ export function EmailComposer() {
 
   return (
     <div className="space-y-6">
-      <header className="border-b border-white/[0.07] pb-6">
-        <SectionEyebrow>Respond</SectionEyebrow>
-        <h1 className="font-display text-3xl font-semibold tracking-[-0.05em] text-white">Email Reply</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-          Write to a customer from the BROKA admin address. Replies come back to that address&apos;s inbox. This is for sending only: it does not show an inbox or the messages you have sent.
-        </p>
-      </header>
+      <PageHeader
+        accent="amber"
+        eyebrow="Respond"
+        title="Email Reply"
+        icon={<Mail size={14} />}
+        description="Write to a customer from the BROKA admin address. Replies come back to that address's inbox. This is for sending only: it does not show an inbox or the messages you have sent."
+      />
 
       {sent ? (
         <Sent result={sent.result} to={sent.to} onAnother={another} />

@@ -55,11 +55,17 @@ const SEVERITY_ICON_CLASS: Record<InsightSeverity, string> = {
 export function JarvisContextPanel({
   contextLabel = "this workspace",
   windowDays = 7,
+  areas,
+  prompts = [],
   onClose,
   className,
 }: {
   contextLabel?: string;
   windowDays?: number;
+  /** Backend insight areas this workspace owns. Omitted = every area. */
+  areas?: readonly string[] | null;
+  /** Workspace questions that prefill the composer. Never auto-sent. */
+  prompts?: readonly string[];
   onClose?: () => void;
   className?: string;
 }) {
@@ -69,7 +75,10 @@ export function JarvisContextPanel({
   const insights = useAdminResource("intelligenceInsights", query);
 
   const ranked = useMemo(() => {
-    const list = [...(insights.data?.insights ?? [])];
+    const all = insights.data?.insights ?? [];
+    // Workspace scope: a signal from another domain is not evidence here, so it
+    // is not shown as if it applied to this route.
+    const list = areas ? all.filter((insight) => areas.includes(insight.area)) : [...all];
     return list
       .map((insight, index) => ({ insight, index }))
       .sort((a, b) => {
@@ -155,6 +164,24 @@ export function JarvisContextPanel({
           <ul className="space-y-2" aria-label="Rule signals from the backend">
             {ranked.slice(0, 4).map((insight) => <InsightRow key={insight.id} insight={insight} />)}
           </ul>
+        ) : null}
+
+        {prompts.length ? (
+          <div className="space-y-1.5">
+            <p className="px-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-600">Ask about {contextLabel}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {prompts.slice(0, 3).map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => setQuestion(prompt)}
+                  className="focus-ring rounded-full border border-white/[0.09] bg-white/[0.03] px-2.5 py-1 text-left text-[10px] font-medium leading-4 text-slate-400 transition hover:border-[#947bff]/40 hover:text-slate-100"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
         ) : null}
 
         <div className="space-y-1.5 pt-1">

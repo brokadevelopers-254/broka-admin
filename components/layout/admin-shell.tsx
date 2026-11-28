@@ -18,6 +18,7 @@ import { useAdminResource } from "@/hooks/use-admin-resource";
 import type { AdminIdentity } from "@/types/broka";
 import { InfoTip } from "@/components/ui/tooltip";
 import { JarvisContextPanel } from "@/components/nexus/jarvis-context";
+import { workspaceContextFor } from "@/lib/nexus/workspace-context";
 
 type NavEntry = { label: string; href: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }>; badge?: "complaints" };
 type NavGroup = { label: string; entries: NavEntry[] };
@@ -396,7 +397,10 @@ export function AdminShell({ children, admin, apiConfigured }: { children: React
 
   const streamRef = useRef<HTMLSpanElement | null>(null);
   const windowDays = searchParams.get("pulse") === "30" ? 30 : 7;
-  const contextLabel = pathname === "/" ? "the Command Center" : pageTitle;
+  // Jarvis is scoped to the workspace it is opened from: its insight areas,
+  // name and suggested questions all come from the current route.
+  const workspace = workspaceContextFor(pathname);
+  const contextLabel = pathname === "/" ? "the Command Center" : workspace.label;
 
   return (
     <div className="nx-app text-slate-100">
@@ -514,6 +518,8 @@ export function AdminShell({ children, admin, apiConfigured }: { children: React
           <JarvisContextPanel
             contextLabel={contextLabel}
             windowDays={windowDays}
+            areas={workspace.areas}
+            prompts={workspace.prompts}
             onClose={() => setJarvisOpen(false)}
             className="nx-fade fixed inset-y-0 right-0 z-[56] w-full max-w-[380px] !rounded-none border-y-0 border-r-0 sm:inset-y-3 sm:right-3 sm:max-h-[calc(100vh-1.5rem)] sm:!rounded-[1.2rem] sm:border"
           />
