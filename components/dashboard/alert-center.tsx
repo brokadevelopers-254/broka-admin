@@ -94,7 +94,7 @@ export function AlertCenter() {
   if (alerts.isLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader eyebrow="Operational awareness" title="Alert Centre" description="Persisted admin alerts with acknowledgement and resolution." icon={<BellRing size={14} />} />
+        <PageHeader accent="rose" eyebrow="Operational awareness" title="Alert Centre" description="Persisted admin alerts with acknowledgement and resolution." icon={<BellRing size={14} />} />
         <div className="data-panel p-5"><ResourceState state="loading" message="Loading the persisted alert feed from the backend." /></div>
       </div>
     );
@@ -105,7 +105,7 @@ export function AlertCenter() {
     if (isEndpointMissing(alerts.error)) {
       return (
         <div className="space-y-6">
-          <PageHeader eyebrow="Operational awareness" title="Alert Centre" description="Persisted admin alerts with acknowledgement and resolution." icon={<BellRing size={14} />} meta={<DataFreshness label="Persisted alert feed" state="unavailable" source="GET /admin/alerts is not served by this backend yet." />} actions={<StatusBadge tone="warning">Backend upgrade required</StatusBadge>} />
+          <PageHeader accent="rose" eyebrow="Operational awareness" title="Alert Centre" description="Persisted admin alerts with acknowledgement and resolution." icon={<BellRing size={14} />} meta={<DataFreshness label="Persisted alert feed" state="unavailable" source="GET /admin/alerts is not served by this backend yet." />} actions={<StatusBadge tone="warning">Backend upgrade required</StatusBadge>} />
           <UnavailablePanel title="Alert source not deployed" detail="The deployed backend does not expose GET /admin/alerts yet (HTTP 404). The feed activates automatically after the backend upgrade." />
         </div>
       );

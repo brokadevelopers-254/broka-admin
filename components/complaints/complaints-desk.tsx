@@ -175,6 +175,7 @@ export function ComplaintsDesk() {
   return (
     <div className="space-y-6">
       <PageHeader
+        accent="rose"
         eyebrow="Trust desk"
         title="Complaints & feedback"
         description="Everything users report from the BROKA app, with first-reply deadlines by severity. A reply or a status change is pushed to the reporter's phone and appears in their Feedback & complaints screen."

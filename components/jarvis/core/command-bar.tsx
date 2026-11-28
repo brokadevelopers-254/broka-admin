@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { ZenoCore, coreStateFor } from "@/components/jarvis/core/zeno-core";
 import { useJarvis } from "@/components/jarvis/provider";
@@ -45,6 +45,22 @@ export function ZenoCommandBar() {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, [analysing]);
+
+  // A question handed over by a contextual Jarvis panel is placed in the
+  // composer and focused. It is never sent automatically, and the parameter
+  // leaves the URL so a reload does not fill the field again.
+  const prefillHandled = useRef(false);
+  useEffect(() => {
+    if (prefillHandled.current) return;
+    const incoming = new URLSearchParams(window.location.search).get("ask");
+    if (!incoming) return;
+    prefillHandled.current = true;
+    jarvis.setDraft(incoming.slice(0, 2000));
+    const url = new URL(window.location.href);
+    url.searchParams.delete("ask");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.setTimeout(() => document.getElementById(COMMAND_INPUT_ID)?.focus(), 0);
+  }, [jarvis]);
 
   const core = coreStateFor({ availability: jarvis.availability, investigating: analysing });
   const elapsed = analysing && jarvis.activity.startedAt !== null ? Math.max(0, Math.floor((now - jarvis.activity.startedAt) / 1000)) : 0;

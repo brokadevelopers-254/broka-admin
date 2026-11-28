@@ -350,6 +350,7 @@ export function OperationsView() {
   return (
     <div className="space-y-6">
       <PageHeader
+        accent="cyan"
         eyebrow="System"
         icon={<Activity size={14} />}
         title="Operations"

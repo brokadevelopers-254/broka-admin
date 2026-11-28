@@ -411,6 +411,7 @@ export function MarketView() {
   return (
     <div className="space-y-6">
       <PageHeader
+        accent="emerald"
         eyebrow="Marketplace intelligence"
         title="What buyers want, and what converts"
         description="Rankings count distinct users per listing, never repeat actions, and leave out staff and the listing's own seller. Each stage counts a buyer once: viewed, saved or liked, contacted, negotiated, deal agreed, deal completed."

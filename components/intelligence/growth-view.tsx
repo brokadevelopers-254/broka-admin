@@ -189,6 +189,7 @@ export function GrowthView() {
   return (
     <div className="space-y-6">
       <PageHeader
+        accent="amber"
         eyebrow="Growth engine"
         title="Who arrives, who acts, who comes back"
         description="People who signed up in the range, followed through both sides of the marketplace to today, and weekly cohorts by how many stay active."

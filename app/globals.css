@@ -197,6 +197,9 @@ a.gauge-card:hover { border-color: rgb(139 117 255 / 0.4); transform: translateY
 
 .freshness-chip {
   display: inline-flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  row-gap: 0.15rem;
   align-items: center;
   gap: 0.4rem;
   border: 1px solid rgb(195 202 226 / 0.1);
@@ -642,4 +645,677 @@ a.gauge-card:hover { border-color: rgb(139 117 255 / 0.4); transform: translateY
   .hud-frame::after, .radar-sweep::after, .nav-glow-item::before { content: none !important; }
   .stagger > * { animation: none !important; }
   .neon-glow, .neon-glow-cyan { text-shadow: none !important; }
+}/* ═══════════════════════════════════════════════════════════════════════════
+   BROKA NEXUS — the premium intelligence surface.
+   A token layer over the established BROKA palette plus the structural
+   primitives the NEXUS shell, cockpit and workspaces share: obsidian canvases,
+   layered glass, neon hairlines, instrument metrics and controlled motion.
+   Every animation below is a transform/opacity/background-position effect and
+   is flattened by the prefers-reduced-motion block above.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --nexus-void: #03040a;
+  --nexus-ink: #070916;
+  --nexus-surface: #0b1020;
+  --nexus-raised: #11182b;
+  --nexus-elevated: #18213a;
+  --nexus-text: #f5f7ff;
+  --nexus-muted: #b4bed3;
+  --nexus-subtle: #8491ac;
+  --nexus-violet: #947bff;
+  --nexus-cyan: #55ddf2;
+  --nexus-emerald: #38d9a5;
+  --nexus-amber: #e7bd68;
+  --nexus-rose: #ff718d;
+  --nexus-border: rgba(190, 203, 232, 0.12);
+  --nexus-border-strong: rgba(190, 203, 232, 0.2);
+  --nexus-violet-rgb: 148 123 255;
+  --nexus-cyan-rgb: 85 221 242;
+  --nx-rail-width: 268px;
+  --nx-rail-collapsed: 84px;
+  --nx-header-height: 76px;
+  /* The NEXUS layer is the canonical palette; map the BROKA tokens onto it so
+     every existing consumer inherits the redesign without a mass rewrite. */
+  --broka-bg: var(--nexus-void);
+  --broka-surface: var(--nexus-ink);
+  --broka-surface-2: var(--nexus-surface);
+  --broka-surface-3: var(--nexus-raised);
+  --broka-surface-4: var(--nexus-elevated);
+  --broka-text: var(--nexus-text);
+  --broka-violet: var(--nexus-violet);
+  --broka-cyan: var(--nexus-cyan);
+  --broka-emerald: var(--nexus-emerald);
+  --broka-amber: var(--nexus-amber);
+  --broka-rose: var(--nexus-rose);
+  --hud-violet-rgb: var(--nexus-violet-rgb);
+  --hud-cyan-rgb: var(--nexus-cyan-rgb);
+}
+
+body {
+  background:
+    radial-gradient(ellipse 60% 40% at 12% -10%, rgb(var(--nexus-violet-rgb) / 0.16), transparent 66%),
+    radial-gradient(ellipse 50% 38% at 92% 4%, rgb(var(--nexus-cyan-rgb) / 0.09), transparent 70%),
+    linear-gradient(180deg, #03040a 0%, #050713 52%, #03040a 100%);
+  background-attachment: fixed;
+}
+
+/* ── Application canvas ─────────────────────────────────────────────────── */
+.nx-app { position: relative; min-height: 100vh; background: transparent; isolation: isolate; }
+.nx-canvas { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.nx-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(190 203 232 / 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(190 203 232 / 0.026) 1px, transparent 1px);
+  background-size: 64px 64px, 64px 64px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 10%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 10%, transparent 80%);
+}
+.nx-canvas::after {
+  content: "";
+  position: absolute;
+  inset: -30% -10% auto -10%;
+  height: 72vh;
+  background:
+    radial-gradient(ellipse 46% 60% at 74% 18%, rgb(var(--nexus-violet-rgb) / 0.2), transparent 62%),
+    radial-gradient(ellipse 38% 50% at 88% 8%, rgb(var(--nexus-cyan-rgb) / 0.12), transparent 66%);
+  filter: blur(24px);
+}
+.nx-stars { position: absolute; inset: 0; opacity: 0.7; }
+.nx-stars::before,
+.nx-stars::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgb(220 228 255 / 0.5) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgb(160 150 255 / 0.45) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgb(120 220 240 / 0.4) 0 1px, transparent 1.4px);
+  background-size: 320px 300px, 460px 420px, 540px 480px;
+  background-position: 12% 18%, 64% 8%, 38% 66%;
+}
+.nx-stars::after { opacity: 0.5; background-position: 78% 44%, 22% 72%, 86% 88%; }
+
+/* ── Sidebar rail ───────────────────────────────────────────────────────── */
+.nx-rail {
+  /* The rail is pinned by the shell (fixed inset-y-0); keep it positioned so the
+     edge light anchors to it rather than to the page. */
+  position: fixed;
+  border-right: 1px solid rgb(var(--nexus-violet-rgb) / 0.14);
+  background:
+    radial-gradient(120% 30% at 50% 0%, rgb(var(--nexus-violet-rgb) / 0.13), transparent 70%),
+    linear-gradient(180deg, rgb(9 12 24 / 0.97), rgb(5 7 15 / 0.99));
+  backdrop-filter: blur(22px) saturate(1.15);
+  -webkit-backdrop-filter: blur(22px) saturate(1.15);
+  box-shadow: inset -1px 0 0 rgb(255 255 255 / 0.025), 30px 0 90px rgb(0 0 0 / 0.4);
+}
+.nx-rail-edge {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgb(var(--nexus-violet-rgb) / 0.55), rgb(var(--nexus-cyan-rgb) / 0.35), rgb(var(--nexus-violet-rgb) / 0.55), transparent);
+  background-size: 100% 220%;
+  animation: nx-edge-flow 22s linear infinite;
+  pointer-events: none;
+}
+@keyframes nx-edge-flow { 0% { background-position: 0 0%; } 100% { background-position: 0 220%; } }
+
+.nx-brand-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.45);
+  background: radial-gradient(circle at 30% 20%, rgb(var(--nexus-violet-rgb) / 0.55), rgb(9 11 22 / 0.9) 70%);
+  box-shadow: 0 0 26px rgb(var(--nexus-violet-rgb) / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.18);
+}
+.nx-brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent 0 72%, rgb(var(--nexus-cyan-rgb) / 0.35) 84%, transparent 100%);
+  animation: nx-rotate 12s linear infinite;
+}
+.nx-brand-mark img { position: relative; z-index: 1; }
+@keyframes nx-rotate { to { transform: rotate(360deg); } }
+
+/* ── Navigation ─────────────────────────────────────────────────────────── */
+.nx-nav-group { margin-bottom: 0.35rem; }
+.nx-nav-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem 0.3rem;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #6f7b96;
+}
+.nx-nav-label::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, rgb(190 203 232 / 0.14), transparent);
+}
+.nx-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.75rem;
+  padding: 0.42rem 0.55rem;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #a3aec6;
+  transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+.nx-nav-item:hover { color: #fff; background: rgb(148 123 255 / 0.075); }
+.nx-nav-item:focus-visible { outline: 2px solid var(--nexus-violet); outline-offset: 2px; }
+.nx-nav-item[aria-current="page"] {
+  color: #fff;
+  background: linear-gradient(90deg, rgb(var(--nexus-violet-rgb) / 0.3), rgb(var(--nexus-violet-rgb) / 0.09) 62%, transparent);
+  box-shadow: inset 0 0 0 1px rgb(var(--nexus-violet-rgb) / 0.38), 0 10px 30px rgb(var(--nexus-violet-rgb) / 0.16);
+}
+.nx-nav-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -0.55rem;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, #c9beff, var(--nexus-cyan));
+  box-shadow: 0 0 14px rgb(var(--nexus-violet-rgb) / 0.9);
+}
+.nx-nav-icon {
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  flex: none;
+  border-radius: 0.55rem;
+  border: 1px solid rgb(190 203 232 / 0.08);
+  background: rgb(255 255 255 / 0.03);
+  color: #9aa6bf;
+  transition: inherit;
+}
+.nx-nav-item:hover .nx-nav-icon { color: #e6e2ff; border-color: rgb(var(--nexus-violet-rgb) / 0.3); }
+.nx-nav-item[aria-current="page"] .nx-nav-icon {
+  color: #fff;
+  border-color: rgb(190 178 255 / 0.5);
+  background: linear-gradient(145deg, rgb(var(--nexus-violet-rgb) / 0.5), rgb(var(--nexus-cyan-rgb) / 0.18));
+  box-shadow: 0 0 18px rgb(var(--nexus-violet-rgb) / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.22);
+}
+.nx-status-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.22);
+  border-radius: 0.9rem;
+  background: linear-gradient(155deg, rgb(24 30 54 / 0.85), rgb(8 11 22 / 0.95));
+  padding: 0.7rem 0.75rem;
+}
+.nx-status-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--nexus-violet-rgb) / 0.7), rgb(var(--nexus-cyan-rgb) / 0.5), transparent);
+}
+
+/* ── Command header ─────────────────────────────────────────────────────── */
+.nx-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: var(--nx-header-height);
+  padding: 0 0.9rem;
+  border-bottom: 1px solid rgb(190 203 232 / 0.08);
+  background: linear-gradient(180deg, rgb(4 6 14 / 0.96), rgb(4 6 14 / 0.78));
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+@media (min-width: 640px) { .nx-header { padding: 0 1.25rem; } }
+@media (min-width: 1024px) { .nx-header { padding: 0 1.5rem; height: 80px; } }
+
+.nx-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 44px;
+  border: 1px solid rgb(190 203 232 / 0.13);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(15 20 36 / 0.9), rgb(9 12 23 / 0.9));
+  padding: 0 0.85rem;
+  color: #8b97af;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.nx-search:hover, .nx-search:focus-within {
+  border-color: rgb(var(--nexus-violet-rgb) / 0.45);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 0 0 3px rgb(var(--nexus-violet-rgb) / 0.1);
+}
+.nx-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 0.7rem;
+  border: 1px solid rgb(190 203 232 / 0.1);
+  background: rgb(255 255 255 / 0.025);
+  color: #aab5cb;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.nx-icon-btn:hover { color: #fff; border-color: rgb(var(--nexus-violet-rgb) / 0.4); background: rgb(var(--nexus-violet-rgb) / 0.1); }
+.nx-icon-btn:focus-visible { outline: 2px solid var(--nexus-violet); outline-offset: 2px; }
+.nx-jarvis-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.45);
+  background: linear-gradient(100deg, rgb(var(--nexus-violet-rgb) / 0.28), rgb(var(--nexus-cyan-rgb) / 0.1));
+  color: #efeaff;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 0 24px rgb(var(--nexus-violet-rgb) / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+.nx-jarvis-btn:hover { box-shadow: 0 0 32px rgb(var(--nexus-violet-rgb) / 0.4); transform: translateY(-1px); }
+
+/* ── Surfaces ───────────────────────────────────────────────────────────── */
+.nx-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--nexus-border);
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgb(var(--nexus-violet-rgb) / 0.07), transparent 55%),
+    linear-gradient(155deg, rgb(17 24 43 / 0.86), rgb(7 9 18 / 0.96));
+  box-shadow: 0 22px 70px rgb(0 0 0 / 0.34), inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+.nx-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--nexus-violet-rgb) / 0.55), rgb(var(--nexus-cyan-rgb) / 0.4), transparent);
+  opacity: 0.75;
+  pointer-events: none;
+}
+.nx-panel-quiet {
+  border: 1px solid rgb(190 203 232 / 0.09);
+  border-radius: 1rem;
+  background: linear-gradient(160deg, rgb(14 19 35 / 0.7), rgb(6 8 17 / 0.9));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.03);
+}
+.nx-inset {
+  border: 1px solid rgb(190 203 232 / 0.08);
+  border-radius: 0.85rem;
+  background: rgb(3 4 10 / 0.42);
+}
+
+/* ── Metric modules ─────────────────────────────────────────────────────── */
+.nx-metric {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgb(190 203 232 / 0.1);
+  border-radius: 1.05rem;
+  background: linear-gradient(155deg, rgb(20 26 47 / 0.92), rgb(8 11 22 / 0.97));
+  padding: 0.95rem 1rem 0.75rem;
+  --nx-accent: var(--nexus-violet);
+  --nx-accent-rgb: var(--nexus-violet-rgb);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 16px 44px rgb(0 0 0 / 0.28);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.nx-metric::before {
+  content: "";
+  position: absolute;
+  inset: -40% -20% auto -20%;
+  height: 80%;
+  background: radial-gradient(ellipse 60% 70% at 20% 40%, rgb(var(--nx-accent-rgb) / 0.24), transparent 70%);
+  pointer-events: none;
+}
+.nx-metric::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--nx-accent-rgb) / 0.7), transparent);
+}
+.nx-metric:hover { transform: translateY(-2px); border-color: rgb(var(--nx-accent-rgb) / 0.42); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 22px 56px rgb(0 0 0 / 0.34), 0 0 34px rgb(var(--nx-accent-rgb) / 0.14); }
+.nx-metric:focus-visible { outline: 2px solid var(--nexus-violet); outline-offset: 3px; }
+.nx-metric__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 0.6rem;
+  border: 1px solid rgb(var(--nx-accent-rgb) / 0.35);
+  background: rgb(var(--nx-accent-rgb) / 0.16);
+  color: color-mix(in srgb, var(--nx-accent) 70%, white);
+  box-shadow: 0 0 18px rgb(var(--nx-accent-rgb) / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.14);
+}
+.nx-metric__value {
+  font-family: var(--font-display), Montserrat, Inter, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.nx-metric__spark { height: 34px; margin: 0.35rem -0.1rem -0.2rem; opacity: 0.95; }
+
+/* ── Command hero ───────────────────────────────────────────────────────── */
+.nx-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.24);
+  border-radius: 1.35rem;
+  background:
+    radial-gradient(90% 120% at 88% -10%, rgb(var(--nexus-violet-rgb) / 0.3), transparent 58%),
+    radial-gradient(60% 90% at 100% 105%, rgb(var(--nexus-cyan-rgb) / 0.14), transparent 62%),
+    linear-gradient(120deg, rgb(13 17 33 / 0.98), rgb(6 8 18 / 0.99));
+  box-shadow: 0 30px 90px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(255 255 255 / 0.055);
+}
+.nx-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--nexus-violet-rgb) / 0.8), rgb(var(--nexus-cyan-rgb) / 0.6), transparent);
+}
+.nx-hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(var(--nexus-violet-rgb) / 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--nexus-violet-rgb) / 0.08) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 95% 85% at 60% 10%, #000 15%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 60% 10%, #000 15%, transparent 80%);
+  pointer-events: none;
+}
+.nx-planet {
+  position: absolute;
+  right: -6%;
+  top: -52%;
+  width: min(520px, 62%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #6f5be0 0%, #3d2f8f 34%, #161a45 62%, #060814 100%);
+  box-shadow:
+    inset -22px -24px 60px rgb(0 0 0 / 0.75),
+    inset 14px 10px 40px rgb(180 160 255 / 0.18),
+    0 0 90px rgb(var(--nexus-violet-rgb) / 0.35);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.nx-planet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image:
+    radial-gradient(ellipse 40% 8% at 26% 40%, rgb(190 170 255 / 0.28), transparent 70%),
+    radial-gradient(ellipse 55% 10% at 62% 22%, rgb(140 190 255 / 0.2), transparent 72%),
+    radial-gradient(ellipse 30% 6% at 48% 70%, rgb(190 170 255 / 0.16), transparent 70%);
+  mix-blend-mode: screen;
+}
+.nx-planet-ring {
+  position: absolute;
+  right: -22%;
+  top: -18%;
+  width: min(760px, 92%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgb(var(--nexus-cyan-rgb) / 0.22);
+  transform: rotateX(72deg) rotateZ(-18deg);
+  box-shadow: 0 0 40px rgb(var(--nexus-violet-rgb) / 0.25), inset 0 0 40px rgb(var(--nexus-cyan-rgb) / 0.12);
+  pointer-events: none;
+}
+.nx-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.3);
+  background: rgb(var(--nexus-violet-rgb) / 0.12);
+  padding: 0.28rem 0.6rem;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #cfc6ff;
+}
+
+/* ── Jarvis context rail ────────────────────────────────────────────────── */
+.nx-jarvis {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.34);
+  border-radius: 1.2rem;
+  background:
+    radial-gradient(100% 70% at 100% 0%, rgb(var(--nexus-violet-rgb) / 0.2), transparent 62%),
+    linear-gradient(165deg, rgb(18 22 42 / 0.95), rgb(7 9 19 / 0.98));
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.36), 0 0 40px rgb(var(--nexus-violet-rgb) / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+.nx-jarvis-orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.5);
+  background: radial-gradient(circle at 34% 28%, #d9d2ff, #8b75ff 42%, #2b2360 78%, #0a0c1c);
+  box-shadow: 0 0 24px rgb(var(--nexus-violet-rgb) / 0.5), inset 0 0 12px rgb(255 255 255 / 0.3);
+}
+.nx-jarvis-orb::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1px dashed rgb(var(--nexus-cyan-rgb) / 0.4);
+  animation: nx-rotate 18s linear infinite;
+}
+.nx-jarvis-bubble {
+  border: 1px solid rgb(190 203 232 / 0.1);
+  border-radius: 0.95rem 0.95rem 0.95rem 0.25rem;
+  background: linear-gradient(155deg, rgb(30 27 62 / 0.85), rgb(15 14 34 / 0.9));
+  padding: 0.7rem 0.8rem;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #d6dbf0;
+}
+.nx-jarvis-chip {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgb(190 203 232 / 0.1);
+  border-radius: 0.65rem;
+  background: rgb(255 255 255 / 0.028);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  font-size: 11.5px;
+  color: #c2cbe0;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+.nx-jarvis-chip:hover { border-color: rgb(var(--nexus-violet-rgb) / 0.45); color: #fff; background: rgb(var(--nexus-violet-rgb) / 0.1); }
+.nx-jarvis-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgb(190 203 232 / 0.14);
+  border-radius: 999px;
+  background: rgb(3 4 10 / 0.55);
+  padding: 0.25rem 0.3rem 0.25rem 0.8rem;
+}
+.nx-jarvis-input input {
+  height: 34px;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: #f5f7ff;
+  font-size: 12px;
+  outline: none;
+}
+.nx-jarvis-input input::placeholder { color: #6f7b96; }
+.nx-jarvis-send {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--nexus-violet), #6f5ce8);
+  color: #fff;
+  box-shadow: 0 0 18px rgb(var(--nexus-violet-rgb) / 0.5);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.nx-jarvis-send:hover { transform: scale(1.05); box-shadow: 0 0 26px rgb(var(--nexus-violet-rgb) / 0.7); }
+.nx-jarvis-send:focus-visible { outline: 2px solid var(--nexus-cyan); outline-offset: 2px; }
+
+/* ── Quick actions ──────────────────────────────────────────────────────── */
+.nx-quick {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: flex-start;
+  border: 1px solid rgb(190 203 232 / 0.1);
+  border-radius: 0.9rem;
+  background: linear-gradient(155deg, rgb(22 27 49 / 0.85), rgb(9 12 23 / 0.95));
+  padding: 0.7rem;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #cfd6e8;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.nx-quick:hover { transform: translateY(-2px); border-color: rgb(var(--nexus-violet-rgb) / 0.45); box-shadow: 0 12px 30px rgb(0 0 0 / 0.3); color: #fff; }
+.nx-quick:focus-visible { outline: 2px solid var(--nexus-violet); outline-offset: 2px; }
+.nx-quick-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 0.55rem;
+  background: rgb(var(--nexus-violet-rgb) / 0.16);
+  border: 1px solid rgb(var(--nexus-violet-rgb) / 0.32);
+  color: #d6ceff;
+}
+
+/* ── Insight + activity rows ────────────────────────────────────────────── */
+.nx-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  border: 1px solid rgb(190 203 232 / 0.08);
+  border-radius: 0.8rem;
+  background: rgb(255 255 255 / 0.022);
+  padding: 0.6rem 0.7rem;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.nx-row:hover { border-color: rgb(var(--nexus-violet-rgb) / 0.32); background: rgb(var(--nexus-violet-rgb) / 0.06); }
+
+/* ── Workspace page banner ──────────────────────────────────────────────── */
+.nx-page-header {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(var(--nx-page-accent-rgb) / 0.24);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(90% 130% at 92% -20%, rgb(var(--nx-page-accent-rgb) / 0.22), transparent 62%),
+    radial-gradient(60% 90% at 0% 120%, rgb(var(--nexus-cyan-rgb) / 0.08), transparent 60%),
+    linear-gradient(125deg, rgb(14 19 36 / 0.96), rgb(6 8 18 / 0.98));
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.34), inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --nx-page-accent: var(--nexus-violet);
+  --nx-page-accent-rgb: var(--nexus-violet-rgb);
+}
+.nx-page-header::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(var(--nx-page-accent-rgb) / 0.75), rgb(var(--nexus-cyan-rgb) / 0.45), transparent);
+}
+.nx-accent-violet { --nx-page-accent-rgb: var(--nexus-violet-rgb); }
+.nx-accent-cyan { --nx-page-accent-rgb: var(--nexus-cyan-rgb); }
+.nx-accent-emerald { --nx-page-accent-rgb: 56 217 165; }
+.nx-accent-amber { --nx-page-accent-rgb: 231 189 104; }
+.nx-accent-rose { --nx-page-accent-rgb: 255 113 141; }
+.nx-page-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 0.55rem;
+  border: 1px solid rgb(var(--nx-page-accent-rgb) / 0.4);
+  background: rgb(var(--nx-page-accent-rgb) / 0.14);
+  color: color-mix(in srgb, var(--nx-page-accent) 65%, white);
+  box-shadow: 0 0 18px rgb(var(--nx-page-accent-rgb) / 0.22);
+}
+
+/* ── Motion utilities ───────────────────────────────────────────────────── */
+.nx-rise { animation: nx-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes nx-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.nx-fade { animation: nx-fade 300ms ease both; }
+@keyframes nx-fade { from { opacity: 0; } to { opacity: 1; } }
+.nx-pulse-dot { position: relative; display: inline-block; width: 7px; height: 7px; border-radius: 999px; background: var(--nexus-emerald); box-shadow: 0 0 10px rgb(56 217 165 / 0.8); flex: none; }
+.nx-pulse-dot[data-tone="warning"] { background: var(--nexus-amber); box-shadow: 0 0 10px rgb(231 189 104 / 0.8); }
+.nx-pulse-dot[data-tone="danger"] { background: var(--nexus-rose); box-shadow: 0 0 10px rgb(255 113 141 / 0.8); }
+.nx-pulse-dot[data-tone="muted"] { background: #64748b; box-shadow: none; }
+.nx-pulse-dot[data-live="true"]::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  color: inherit;
+  animation: live-ping 2.4s ease-out infinite;
+}
+.nx-sheen { position: relative; overflow: hidden; }
+.nx-sheen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 38%, rgb(255 255 255 / 0.06) 48%, transparent 58%);
+  transform: translateX(-100%);
+  animation: nx-sheen 9s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes nx-sheen { 0%, 55% { transform: translateX(-100%); } 70%, 100% { transform: translateX(100%); } }
+
+/* Wide tables stay usable on a phone: a sticky first column and a scroll hint. */
+.nx-table-hint { display: none; }
+@media (max-width: 767px) { .nx-table-hint { display: flex; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-rail-edge, .nx-brand-mark::after, .nx-jarvis-orb::after, .nx-sheen::before, .nx-pulse-dot[data-live="true"]::after { animation: none !important; }
+  .nx-rise, .nx-fade { animation: none !important; }
+  .nx-metric:hover, .nx-quick:hover, .nx-jarvis-btn:hover { transform: none !important; }
+}
+
+@media print {
+  .nx-canvas, .nx-rail-edge, .nx-stars { display: none !important; }
+  .nx-panel, .nx-metric, .nx-jarvis, .nx-hero, .nx-page-header { box-shadow: none !important; background: #fff !important; }
 }
